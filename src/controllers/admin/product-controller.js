@@ -43,7 +43,7 @@ module.exports.readProducts = async (req, res) => {
         p.volume,
         p.unit
     FROM products p
-    LEFT JOIN categories c ON p.category = c.id WHERE name LIKE '%${name}%' ORDER BY ${sortBy} ${order} LIMIT ${offset}, ${limit} ;`;
+    LEFT JOIN categories c ON p.category = c.id WHERE p.name LIKE '%${name}%' ORDER BY ${sortBy} ${order} LIMIT ${offset}, ${limit} ;`;
 
       const [PRODUCTS] = await database.execute(GET_PRODUCTS);
 
