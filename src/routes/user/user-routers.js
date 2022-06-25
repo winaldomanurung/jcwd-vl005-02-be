@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const { auth } = require("../../helpers/authToken");
+
 const autho = require("../../helpers/authorization-token");
 
 // import user controller
@@ -13,3 +14,4 @@ router.post("/resetpassword", user.resetpassword);
 
 // export * modules
 module.exports = router;
+
