@@ -113,6 +113,48 @@ module.exports.readProducts = async (req, res) => {
   }
 };
 
+module.exports.readProductBestSeller = async (req, res) => {
+  console.log("bestseller");
+  try {
+    let GET_PRODUCTS = `SELECT 
+      p.id, 
+      p.name,
+        p.picture,
+      c.name as category,
+      p.description, 
+        p.price, p.sold,
+      p.stock, 
+        p.volume,
+        p.unit
+    FROM products p
+    LEFT JOIN categories c ON p.category = c.id ORDER BY p.sold desc LIMIT 0, 5 ;`;
+
+    const [PRODUCTS] = await database.execute(GET_PRODUCTS);
+
+    const response = new createResponse(
+      httpStatus.OK,
+      "Products data fetched",
+      "Products data fetched successfully!",
+      PRODUCTS,
+      PRODUCTS.length
+    );
+
+    res.status(response.status).send(response);
+  } catch (err) {
+    console.log("error : ", err);
+    const isTrusted = err instanceof createError;
+    if (!isTrusted) {
+      err = new createError(
+        httpStatus.Internal_Server_Error,
+        "SQL Script Error",
+        err.sqlMessage
+      );
+      console.log(err);
+    }
+    res.status(err.status).send(err);
+  }
+};
+
 module.exports.readProductById = async (req, res) => {
   const productId = req.params.productId;
 
