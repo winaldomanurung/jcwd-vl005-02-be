@@ -16,7 +16,7 @@ module.exports = (req, res, next) => {
 
     // modifed object req
     req.id = id;
-    
+
     next();
   } catch (error) {
     console.log("error:", error);
