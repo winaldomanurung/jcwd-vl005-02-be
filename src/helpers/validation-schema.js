@@ -41,4 +41,3 @@ module.exports.loginSchema = Joi.object({
     .pattern(/[0-9]/)
     .required(),
 });
-
