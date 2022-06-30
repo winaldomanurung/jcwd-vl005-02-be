@@ -38,6 +38,7 @@ app.use("/admin", routers.adminProductRouter);
 app.use("/admin/categories", routers.adminCategoriesRouter);
 app.use("/users", routers.user_router);
 app.use("/user/products", routers.userProductRouter);
+app.use("/user/cart", routers.userCartRouter);
 
 app.listen(port, () => {
   console.log("Listening to Port: " + port);
