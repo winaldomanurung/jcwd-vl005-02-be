@@ -56,9 +56,12 @@ module.exports.readAllCart = async (req, res) => {
 };
 
 module.exports.readCart = async (req, res) => {
-  const userId = req.params.userId || 1;
+  // const userId = req.params.userId || 1;
+  const userId = req.id;
+  console.log(userId);
   const page = req.query.page || 1;
   const offset = (page - 1) * 5;
+  console.log("masuk");
 
   try {
     const GET_CART_ITEMS = `
@@ -86,7 +89,7 @@ module.exports.readCart = async (req, res) => {
         httpStatus.OK,
         "There isn't any items in the cart yet",
         "Cart item is not found.",
-        CART_ITEMS,
+        { items: CART_ITEMS, total: CART_ITEMS.length },
         CART_ITEMS.length
       );
 
@@ -236,7 +239,7 @@ module.exports.addToCartWithQuantity = async (req, res) => {
               c.user_id,
               c.product_id, 
               c.amount, 
-              p.stock
+              p.stock, 
             FROM cart_items c
             LEFT JOIN products p ON c.product_id = p.id
             WHERE user_id = ${database.escape(

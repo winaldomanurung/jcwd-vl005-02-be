@@ -1,9 +1,12 @@
 const express = require("express");
 const router = express.Router();
 
+const auth = require("../../helpers/authorization-token");
+
 const { userCartController } = require("../../controllers");
 
 router.get("/:userId", userCartController.readCart);
+router.get("/", auth, userCartController.readCart);
 router.get("/:userId/all", userCartController.readAllCart);
 router.post("/:userId/add/:productId", userCartController.addToCart);
 router.post(
