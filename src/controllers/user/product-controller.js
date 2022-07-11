@@ -9,11 +9,6 @@ const {
   addProductSchema,
 } = require("../../helpers/validation-schema");
 
-module.exports.getAdmin = async (req, res) => {
-  console.log("sampe");
-  res.status(200).send("<h1>Admin</h1>");
-};
-
 module.exports.readProducts = async (req, res) => {
   const page = req.query.page || 1;
   const name = req.query.name || "";
@@ -23,13 +18,9 @@ module.exports.readProducts = async (req, res) => {
   const sortBy = req.query.sortBy || "id";
   const order = req.query.order || "asc";
   const offset = (page - 1) * limit;
-  console.log(page, limit, offset, name, category, price);
-  try {
-    // const CHECK_VERIFIED_USER = `SELECT isVerified,userId FROM users WHERE userId = ${database.escape(
-    //   userId
-    // )}`;
-    // const [VERIFIED_USER] = await database.execute(CHECK_VERIFIED_USER);
+  // console.log(page, limit, offset, name, category, price);
 
+  try {
     let lowPrice;
     let highPrice;
     switch (parseInt(price)) {

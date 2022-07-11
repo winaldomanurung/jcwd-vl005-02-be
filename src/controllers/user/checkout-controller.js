@@ -12,7 +12,7 @@ const ShortUniqueId = require("short-unique-id");
 const uid = new ShortUniqueId();
 
 module.exports.readAllCart = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
   // let userId = req.user.id;
 
   try {
@@ -137,7 +137,7 @@ module.exports.readCart = async (req, res) => {
 };
 
 module.exports.readAllAddresses = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
 
   try {
     const GET_ADDRESSES = `
@@ -171,7 +171,7 @@ module.exports.readAllAddresses = async (req, res) => {
 };
 
 module.exports.readAddressById = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
   let addressId = req.params.addressId;
 
   try {
@@ -281,7 +281,7 @@ module.exports.readCart = async (req, res) => {
 };
 
 module.exports.addAddress = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
   let {
     newLabel: label,
     newAddress: address,
@@ -369,13 +369,14 @@ module.exports.addAddress = async (req, res) => {
 
 module.exports.addInvoice = async (req, res) => {
   let {
-    userId,
+    // userId,
     addressId,
     total_payment,
     payment_method,
-    payment_method_detail,
     status,
   } = req.body;
+
+  let userId = req.user.id;
 
   console.log(req.body);
 
@@ -420,13 +421,13 @@ module.exports.addInvoice = async (req, res) => {
     WHERE c.user_id = ${userId};`;
 
     const ADD_INVOICE_HEADER = `
-      INSERT INTO invoice_headers(code, user_id, address_id, total_payment, payment_method, payment_method_detail, status)
+      INSERT INTO invoice_headers(code, user_id, address_id, total_payment, payment_method, status)
       VALUES(${database.escape(invoiceCode)},
           ${database.escape(userId)},${database.escape(
       addressId
     )},${database.escape(total_payment)},${database.escape(
       payment_method
-    )},${database.escape(payment_method_detail)},${database.escape(status)}
+    )},${database.escape(status)}
       );
   `;
 
@@ -483,12 +484,12 @@ module.exports.addInvoice = async (req, res) => {
 };
 
 module.exports.readInvoice = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
 
   try {
     const GET_INVOICE_ITEMS = `
     SELECT
-    h.id, h.code, h.user_id, date_format(h.date, '%M %e, %Y') as date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method, h.payment_method_detail,
+    h.id, h.code, h.user_id, date_format(h.date, '%M %e, %Y') as date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
     h.status, d.invoice_header_id, d.product_id, p.name, d.price, d.amount, d.unit
         FROM invoice_headers h 
         LEFT JOIN invoice_details d ON h.id = d.invoice_header_id

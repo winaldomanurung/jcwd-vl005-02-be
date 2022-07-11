@@ -4,17 +4,19 @@ const auth = require("../../helpers/authorization-token");
 
 const { userCheckoutController } = require("../../controllers");
 
-router.get("/:userId", userCheckoutController.readAllCart);
-router.post("/:userId/add-address", userCheckoutController.addAddress);
-router.get("/:userId/addresses", userCheckoutController.readAllAddresses);
+router.get("/", auth, userCheckoutController.readAllCart);
+router.post("/add-address", auth, userCheckoutController.addAddress);
+router.get("/addresses", auth, userCheckoutController.readAllAddresses);
 router.get(
-  "/:userId/addresses/:addressId",
+  "/addresses/:addressId",
+  auth,
   userCheckoutController.readAddressById
 );
-router.post("/:userId/invoice", userCheckoutController.addInvoice);
-router.get("/:userId/get-invoice", userCheckoutController.readInvoice);
+router.post("/invoice", auth, userCheckoutController.addInvoice);
+router.get("/get-invoice", auth, userCheckoutController.readInvoice);
 router.post(
-  "/:userId/upload/:invoiceId",
+  "/upload/:invoiceId",
+  auth,
   userCheckoutController.createPaymentProof
 );
 
