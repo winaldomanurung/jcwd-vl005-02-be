@@ -35,6 +35,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/admin", routers.adminProductRouter);
+app.use("/admin", routers.adminTransactionRouter);
 app.use("/admin/categories", routers.adminCategoriesRouter);
 app.use("/users", routers.user_router);
 app.use("/user/products", routers.userProductRouter);
