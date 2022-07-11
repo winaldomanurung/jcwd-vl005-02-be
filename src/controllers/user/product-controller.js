@@ -62,7 +62,7 @@ module.exports.readProducts = async (req, res) => {
       c.name as category,
       p.description, 
         p.price, p.sold,
-      p.stock, 
+      p.stock, p.stock_in_unit, 
         p.volume,
         p.unit
     FROM products p
@@ -157,8 +157,8 @@ module.exports.readProductById = async (req, res) => {
       p.picture,
     c.name as category,
     p.description, 
-      p.price, p.sold,
-    p.stock, 
+    p.price, p.sold,
+    p.stock, p.stock_in_unit, 
       p.volume,
       p.unit
   FROM products p

@@ -13,7 +13,13 @@ router.get(
   userCheckoutController.readAddressById
 );
 router.post("/invoice", auth, userCheckoutController.addInvoice);
-router.get("/get-invoice", auth, userCheckoutController.readInvoice);
+// router.get("/get-invoice", auth, userCheckoutController.readInvoice);
+router.get(
+  "/get-invoice/:invoiceCode",
+  auth,
+  userCheckoutController.readInvoice
+);
+
 router.post(
   "/upload/:invoiceId",
   auth,

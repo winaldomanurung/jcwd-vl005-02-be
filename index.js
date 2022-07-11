@@ -41,6 +41,7 @@ app.use("/user/products", routers.userProductRouter);
 app.use("/user/cart", routers.userCartRouter);
 app.use("/user/checkout", routers.userCheckoutRouter);
 app.use("/user/payment", routers.braintreeRouter);
+app.use("/user/history", routers.historyRouter);
 
 app.listen(port, () => {
   console.log("Listening to Port: " + port);

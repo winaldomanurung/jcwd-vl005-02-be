@@ -16,9 +16,9 @@ module.exports.readAllCart = async (req, res) => {
     c.id,
     c.user_id,
     c.product_id,
-      p.name,
+      p.name, p.unit,
       pc.name as category,
-      p.stock,
+      p.stock, p.stock_in_unit,
     c.amount,
       p.stock-c.amount as remaining_stock,
       p.price,
@@ -69,9 +69,9 @@ module.exports.readCart = async (req, res) => {
     c.id,
     c.user_id,
     c.product_id,
-      p.name,
+      p.name, p.unit,
       pc.name as category,
-      p.stock,
+      p.stock, p.stock_in_unit,
     c.amount,
       p.stock-c.amount as remaining_stock,
       p.price,
@@ -239,7 +239,7 @@ module.exports.addToCartWithQuantity = async (req, res) => {
               c.user_id,
               c.product_id, 
               c.amount, 
-              p.stock
+              p.stock, p.stock_in_unit
             FROM cart_items c
             LEFT JOIN products p ON c.product_id = p.id
             WHERE user_id = ${database.escape(

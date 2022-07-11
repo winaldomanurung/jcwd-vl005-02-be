@@ -5,6 +5,7 @@ const userProductController = require("./user/product-controller");
 const userCartController = require("./user/cart-controller");
 const userCheckoutController = require("./user/checkout-controller");
 const braintreeController = require("./user/braintree-controller");
+const userHistoryController = require("./user/history-controller");
 
 module.exports = {
   adminProductController,
@@ -14,4 +15,5 @@ module.exports = {
   userCartController,
   userCheckoutController,
   braintreeController,
+  userHistoryController,
 };

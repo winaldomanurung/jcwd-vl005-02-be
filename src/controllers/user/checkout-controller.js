@@ -371,7 +371,8 @@ module.exports.addInvoice = async (req, res) => {
   let {
     // userId,
     addressId,
-    total_payment,
+    shopping_amount,
+    shipping_cost,
     payment_method,
     status,
   } = req.body;
@@ -421,13 +422,13 @@ module.exports.addInvoice = async (req, res) => {
     WHERE c.user_id = ${userId};`;
 
     const ADD_INVOICE_HEADER = `
-      INSERT INTO invoice_headers(code, user_id, address_id, total_payment, payment_method, status)
+      INSERT INTO invoice_headers(code, user_id, address_id, shopping_amount, shipping_cost, payment_method, status)
       VALUES(${database.escape(invoiceCode)},
           ${database.escape(userId)},${database.escape(
       addressId
-    )},${database.escape(total_payment)},${database.escape(
-      payment_method
-    )},${database.escape(status)}
+    )},${database.escape(shopping_amount)}, ${database.escape(
+      shipping_cost
+    )}, ${database.escape(payment_method)},${database.escape(status)}
       );
   `;
 
@@ -437,8 +438,6 @@ module.exports.addInvoice = async (req, res) => {
     const [INVOICE_HEADER_ADDED] = await database.execute(ADD_INVOICE_HEADER);
     const INVOICE_HEADER_ID = await database.execute(GET_INVOICE_HEADER_ID);
     const invoiceHeaderId = INVOICE_HEADER_ID[0][0]["LAST_INSERT_ID()"];
-
-    // console.log(CART_ITEMS);
 
     CART_ITEMS.map(async (cartItem) => {
       const ADD_INVOICE_DETAIL = `
@@ -464,7 +463,7 @@ module.exports.addInvoice = async (req, res) => {
       httpStatus.OK,
       "Add invoice success",
       `Your new invoice is created.`,
-      INVOICE_HEADER_ID[0][0]["LAST_INSERT_ID()"],
+      invoiceCode,
       CART_ITEMS
     );
     res.status(response.status).send(response);
@@ -485,23 +484,36 @@ module.exports.addInvoice = async (req, res) => {
 
 module.exports.readInvoice = async (req, res) => {
   let userId = req.user.id;
+  let invoiceCode = req.params.invoiceCode;
 
   try {
+    // const GET_INVOICE_ITEMS = `
+    // SELECT
+    // h.id, h.code, h.user_id, date_format(h.date, '%M %e, %Y') as date, h.address_id, a.address, a.city, a.province, a.postal_code, h.shipping_cost, h.total_payment, h.payment_method,
+    // h.status, d.invoice_header_id, d.product_id, p.name, d.price, d.amount, d.unit
+    //     FROM invoice_headers h
+    //     LEFT JOIN invoice_details d ON h.id = d.invoice_header_id
+    //     LEFT JOIN products p ON d.product_id = p.id
+    //     LEFT JOIN address a ON h.address_id = a.id
+    //     WHERE h.user_id = ${database.escape(userId)} AND d.invoice_header_id=(
+    //         SELECT
+    //         id
+    //         FROM invoice_headers
+    //         WHERE user_id = ${database.escape(userId)}
+    //         ORDER  BY date DESC
+    //         LIMIT 1);`;
+
     const GET_INVOICE_ITEMS = `
     SELECT
-    h.id, h.code, h.user_id, date_format(h.date, '%M %e, %Y') as date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
+    h.id, h.code, h.user_id, date_format(h.date, '%M %e, %Y') as date, h.address_id, a.address, a.city, a.province, a.postal_code, h.shipping_cost, h.total_payment, h.payment_method,
     h.status, d.invoice_header_id, d.product_id, p.name, d.price, d.amount, d.unit
         FROM invoice_headers h 
         LEFT JOIN invoice_details d ON h.id = d.invoice_header_id
         LEFT JOIN products p ON d.product_id = p.id
         LEFT JOIN address a ON h.address_id = a.id
-        WHERE h.user_id = ${database.escape(userId)} AND d.invoice_header_id=(
-            SELECT
-            id 
-            FROM invoice_headers  
-            WHERE user_id = ${database.escape(userId)}
-            ORDER  BY date DESC
-            LIMIT 1);`;
+        WHERE h.user_id = ${database.escape(
+          userId
+        )} AND h.code= ${database.escape(invoiceCode)};`;
 
     const [INVOICE_ITEMS] = await database.execute(GET_INVOICE_ITEMS);
 
@@ -549,6 +561,7 @@ module.exports.createPaymentProof = (req, res) => {
 
       let data = JSON.parse(req.body.data);
       let { invoiceId } = data;
+      console.log(invoiceId, "invoiceid");
 
       // Gunakan Joi untuk validasi data dari body
       const { error } = addProofSchema.validate(data);
@@ -560,9 +573,9 @@ module.exports.createPaymentProof = (req, res) => {
         );
       }
 
-      const CREATE_PROOF_OF_PAYMENT = `INSERT INTO payments (invoice_id, status) VALUES( ${database.escape(
+      const CREATE_PROOF_OF_PAYMENT = `INSERT INTO payments (invoice_id) VALUES(${database.escape(
         invoiceId
-      )}, 'Waiting for check');`;
+      )});`;
       const [PROOF_OF_PAYMENT] = await database.execute(
         CREATE_PROOF_OF_PAYMENT
       );
@@ -595,6 +608,12 @@ module.exports.createPaymentProof = (req, res) => {
         path + "/" + file[0].filename
       )} WHERE id=${database.escape(paymentId)};`;
       console.log(INSERT_IMAGES);
+
+      const UPDATE_INVOICE_STATUS = `UPDATE invoice_headers SET status='Waiting for verification'
+      WHERE id=${database.escape(invoiceId)};`;
+      const [INVOICE_STATUS] = await database.execute(UPDATE_INVOICE_STATUS);
+
+      console.log(INVOICE_STATUS);
 
       databaseSync.query(INSERT_IMAGES, (err, results) => {
         if (err) {
