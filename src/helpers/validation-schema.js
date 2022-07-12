@@ -56,3 +56,18 @@ module.exports.registerSchema = Joi.object({
     .required(),
   repassword: Joi.ref("password"),
 });
+
+module.exports.resetPasswordSchema = Joi.object({
+  password: Joi.string()
+    .min(8)
+    .pattern(/[!@#$%&*_!]/)
+    .pattern(/[A-Z]/)
+    .pattern(/[a-z]/)
+    .pattern(/[0-9]/)
+    .required(),
+  repassword: Joi.ref("password"),
+});
+
+module.exports.forgotPasswordSchema = Joi.object({
+  Email: Joi.string().email().required(),
+});
