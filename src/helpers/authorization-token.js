@@ -15,8 +15,9 @@ module.exports = (req, res, next) => {
     const { id } = JWT.verify(token, "private123");
     console.log(id)
 
+    let userData = { user: { id: id } };
     // modifed object req
-    req.id = id;
+    Object.assign(req, userData);
     next();
   } catch (error) {
     console.log("error:", error);

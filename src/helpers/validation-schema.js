@@ -65,9 +65,20 @@ module.exports.resetPasswordSchema = Joi.object({
     .pattern(/[a-z]/)
     .pattern(/[0-9]/)
     .required(),
-  repassword: Joi.ref("password"),
+  repassword: Joi.ref("password")
 });
 
 module.exports.forgotPasswordSchema = Joi.object({
   Email: Joi.string().email().required(),
+module.exports.addAddressSchema = Joi.object({
+  label: Joi.string().min(3).max(50).required(),
+  address: Joi.string().min(3).max(200).required(),
+  phone: Joi.number().required(),
+  city: Joi.string().min(3).max(50).required(),
+  postal_code: Joi.number().required(),
+  province: Joi.string().min(3).max(50).required(),
+});
+
+module.exports.addProofSchema = Joi.object({
+  invoiceId: Joi.number().required(),
 });

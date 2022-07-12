@@ -3,3 +3,4 @@ node_modules
 .prettierrc
 
 public/product-images
+public/payment-proof

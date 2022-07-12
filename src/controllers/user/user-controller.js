@@ -61,7 +61,7 @@ module.exports.login = async (req, res) => {
 // KEEP LOGIN
 module.exports.keeplogin = async (req, res) => {
   const token = req.header("Auth-Token");
-  const id = req.id;
+  const id = req.user.id;
   try {
     const GET_USER = `SELECT * FROM users WHERE id = ?;`;
     const [USER] = await db.execute(GET_USER, [id]);

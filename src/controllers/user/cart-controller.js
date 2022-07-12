@@ -8,7 +8,7 @@ const {
 } = require("../../helpers/validation-schema");
 
 module.exports.readAllCart = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
 
   try {
     const GET_CART_ITEMS = `
@@ -16,9 +16,9 @@ module.exports.readAllCart = async (req, res) => {
     c.id,
     c.user_id,
     c.product_id,
-      p.name,
+      p.name, p.unit,
       pc.name as category,
-      p.stock,
+      p.stock, p.stock_in_unit,
     c.amount,
       p.stock-c.amount as remaining_stock,
       p.price,
@@ -56,9 +56,12 @@ module.exports.readAllCart = async (req, res) => {
 };
 
 module.exports.readCart = async (req, res) => {
-  const userId = req.params.userId || 1;
+  // const userId = req.params.userId || 1;
+  const userId = req.user.id;
+  console.log(userId);
   const page = req.query.page || 1;
   const offset = (page - 1) * 5;
+  console.log("masuk");
 
   try {
     const GET_CART_ITEMS = `
@@ -66,9 +69,9 @@ module.exports.readCart = async (req, res) => {
     c.id,
     c.user_id,
     c.product_id,
-      p.name,
+      p.name, p.unit,
       pc.name as category,
-      p.stock,
+      p.stock, p.stock_in_unit,
     c.amount,
       p.stock-c.amount as remaining_stock,
       p.price,
@@ -86,7 +89,7 @@ module.exports.readCart = async (req, res) => {
         httpStatus.OK,
         "There isn't any items in the cart yet",
         "Cart item is not found.",
-        CART_ITEMS,
+        { items: CART_ITEMS, total: CART_ITEMS.length },
         CART_ITEMS.length
       );
 
@@ -131,7 +134,7 @@ module.exports.readCart = async (req, res) => {
 };
 
 module.exports.addToCart = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
   let productId = req.params.productId;
   // console.log(userId);
   // console.log(productId);
@@ -211,7 +214,7 @@ module.exports.addToCart = async (req, res) => {
 };
 
 module.exports.addToCartWithQuantity = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
   let productId = req.params.productId;
   let qty = req.params.qty;
   // console.log(userId);
@@ -236,7 +239,7 @@ module.exports.addToCartWithQuantity = async (req, res) => {
               c.user_id,
               c.product_id, 
               c.amount, 
-              p.stock
+              p.stock, p.stock_in_unit
             FROM cart_items c
             LEFT JOIN products p ON c.product_id = p.id
             WHERE user_id = ${database.escape(
@@ -313,7 +316,7 @@ module.exports.addToCartWithQuantity = async (req, res) => {
 };
 
 module.exports.updateCartQuantity = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
   let productId = req.params.productId;
   let qty = req.body.qty;
 
@@ -370,7 +373,7 @@ module.exports.updateCartQuantity = async (req, res) => {
 };
 
 module.exports.deleteCartItem = async (req, res) => {
-  let userId = req.params.userId;
+  let userId = req.user.id;
   let productId = req.params.productId;
 
   try {
