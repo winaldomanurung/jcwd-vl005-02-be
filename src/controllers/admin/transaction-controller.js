@@ -5,7 +5,13 @@ const db = require("../../config").promise();
 // 1.GET ALL DATA TRANSACTIONS
 module.exports.getAllTransactions = async (req, res) => {
   try {
-    const GET_ALL_TRANSACTIONS = `SELECT * FROM dummy_transactions;`;
+    const GET_ALL_TRANSACTIONS = `SELECT
+    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
+    h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+        FROM invoice_headers h 
+        LEFT JOIN users u ON h.user_id = u.id
+        LEFT JOIN address a ON h.address_id = a.id
+        LEFT JOIN payments p ON h.id = p.invoice_id;`;
     const DATA = await db.execute(GET_ALL_TRANSACTIONS);
     res.status(200).send(DATA[0]);
   } catch (error) {
@@ -59,13 +65,31 @@ module.exports.TransactionsByMonth = async (req, res) => {
 
 // 4. CHANGE TRANSACTION STATUS
 module.exports.ChangeTransactionsStatus = async (req, res) => {
-  const { id, status, month, startDate, endDate } = req.body;
+  const {
+    id,
+    status,
+    month,
+    startDate,
+    endDate,
+    userId,
+    message,
+    invoiceHeaderId,
+    invoiceHeaderCode,
+  } = req.body;
   try {
-    const CHANGE_TRANSACTIONS_STATUS = `UPDATE dummy_transactions SET status = ${db.escape(
+    const CHANGE_TRANSACTIONS_STATUS = `UPDATE invoice_headers SET status = ${db.escape(
       status
     )} WHERE id = ${db.escape(id)};`;
 
     await db.execute(CHANGE_TRANSACTIONS_STATUS);
+
+    const ADD_NOTIFICATION = `INSERT INTO user_notifications (user_id, message, invoice_header_id, invoice_header_code)
+    VALUES (
+    ${db.escape(userId)}, ${db.escape(message)}, ${db.escape(
+      invoiceHeaderId
+    )}, ${db.escape(invoiceHeaderCode)});`;
+
+    await db.execute(ADD_NOTIFICATION);
 
     // res.status(200).send(status);
 
@@ -86,7 +110,13 @@ module.exports.ChangeTransactionsStatus = async (req, res) => {
     //   console.log(endDate);
     //   res.status(200).send(DATA[0]);
     // } else {
-    const GET_ALL_TRANSACTIONS = `SELECT * FROM dummy_transactions;`;
+    const GET_ALL_TRANSACTIONS = `SELECT
+    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
+    h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+        FROM invoice_headers h 
+        LEFT JOIN users u ON h.user_id = u.id
+        LEFT JOIN address a ON h.address_id = a.id
+        LEFT JOIN payments p ON h.id = p.invoice_id;`;
     const DATA = await db.execute(GET_ALL_TRANSACTIONS);
     res.status(200).send(DATA[0]);
     // }
@@ -103,3 +133,19 @@ module.exports.ChangeTransactionsStatus = async (req, res) => {
 
 // -- MONTH AND YEAR
 // SELECT * FROM dummy_transactions WHERE DATE_FORMAT(payment_date,'%Y-%m') = '2022-04'
+
+module.exports.getTransactionPayment = async (req, res) => {
+  let invoiceId = req.params.id;
+  console.log(invoiceId);
+  try {
+    const GET_TRANSACTIONS_IMAGE = `SELECT picture_url FROM payments WHERE invoice_id=${db.escape(
+      invoiceId
+    )};`;
+    const IMAGE = await db.execute(GET_TRANSACTIONS_IMAGE);
+    console.log(IMAGE[0][0]["picture_url"]);
+    res.status(200).send(IMAGE[0][0]["picture_url"]);
+  } catch (error) {
+    console.log("error:", error);
+    return res.status(500).send(error);
+  }
+};

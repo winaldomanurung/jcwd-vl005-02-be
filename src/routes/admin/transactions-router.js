@@ -2,12 +2,22 @@
 const express = require("express");
 const router = express.Router();
 // import transactions controller
-const {adminTransactionContoller} = require("../../controllers")
+const { adminTransactionContoller } = require("../../controllers");
 
 // define route
-router.get("/transaction",adminTransactionContoller.getAllTransactions)
-router.post("/transactiondaterange",adminTransactionContoller.TransactionsByDateRange)
-router.post("/transactionbymonth",adminTransactionContoller.TransactionsByMonth)
-router.patch("/changetransactionstatus",adminTransactionContoller.ChangeTransactionsStatus)
+router.get("/transaction", adminTransactionContoller.getAllTransactions);
+router.get("/transaction/:id", adminTransactionContoller.getTransactionPayment);
+router.post(
+  "/transactiondaterange",
+  adminTransactionContoller.TransactionsByDateRange
+);
+router.post(
+  "/transactionbymonth",
+  adminTransactionContoller.TransactionsByMonth
+);
+router.patch(
+  "/changetransactionstatus",
+  adminTransactionContoller.ChangeTransactionsStatus
+);
 
 module.exports = router;

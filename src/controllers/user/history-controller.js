@@ -10,6 +10,22 @@ const {
 } = require("../../helpers/validation-schema");
 const ShortUniqueId = require("short-unique-id");
 const uid = new ShortUniqueId();
+const puppeteer = require("puppeteer");
+const fs = require("fs-extra");
+const hbs = require("handlebars");
+const path = require("path");
+// const data = require("../../templates/data.json");
+
+const compile = async function (templateName, data) {
+  const filePath = path.join(
+    process.cwd(),
+    "src/templates",
+    `${templateName}.hbs`
+  );
+  const html = await fs.readFile(filePath, "utf8");
+  console.log(html);
+  return hbs.compile(html)(data);
+};
 
 module.exports.readAllInvoice = async (req, res) => {
   let userId = req.user.id;
@@ -46,49 +62,121 @@ module.exports.readAllInvoice = async (req, res) => {
   }
 };
 
-// module.exports.readAllInvoice = async (req, res) => {
-//   let userId = req.user.id;
+module.exports.readAllNotifications = async (req, res) => {
+  let userId = req.user.id;
 
-//   try {
-//     const GET_INVOICE_ITEMS = `
-//     SELECT
-//     h.id, h.code, h.user_id, date_format(h.date, '%M %e, %Y') as date, h.address_id, a.address, a.city, a.province, a.postal_code, h.shipping_cost, h.total_payment, h.payment_method,
-//     h.status, d.invoice_header_id, d.product_id, p.name, d.price, d.amount, d.unit
-//         FROM invoice_headers h
-//         LEFT JOIN invoice_details d ON h.id = d.invoice_header_id
-//         LEFT JOIN products p ON d.product_id = p.id
-//         LEFT JOIN address a ON h.address_id = a.id
-//         WHERE h.user_id = ${database.escape(userId)} AND d.invoice_header_id=(
-//             SELECT
-//             id
-//             FROM invoice_headers
-//             WHERE user_id = ${database.escape(userId)}
-//             ORDER  BY date DESC
-//             LIMIT 1);`;
+  try {
+    const GET_NOTIFICATIONS = `
+    SELECT *, date_format(created_at, '%M %e, %Y') as date FROM user_notifications
+        WHERE user_id = ${database.escape(userId)} ;`;
 
-//     const [INVOICE_ITEMS] = await database.execute(GET_INVOICE_ITEMS);
+    const [NOTIFICATIONS] = await database.execute(GET_NOTIFICATIONS);
 
-//     // create response
-//     const response = new createResponse(
-//       httpStatus.OK,
-//       "Address data fetched",
-//       "Address data fetched successfully!",
-//       INVOICE_ITEMS,
-//       INVOICE_ITEMS.length
-//     );
+    console.log(NOTIFICATIONS);
 
-//     res.status(response.status).send(response);
-//   } catch (err) {
-//     console.log("error : ", err);
-//     const isTrusted = err instanceof createError;
-//     if (!isTrusted) {
-//       err = new createError(
-//         httpStatus.Internal_Server_Error,
-//         "SQL Script Error",
-//         err.sqlMessage
-//       );
-//       console.log(err);
-//     }
-//     res.status(err.status).send(err);
-//   }
-// };
+    // create response
+    const response = new createResponse(
+      httpStatus.OK,
+      "Notification data fetched",
+      "Notification data fetched successfully!",
+      NOTIFICATIONS,
+      NOTIFICATIONS.length
+    );
+
+    res.status(response.status).send(response);
+  } catch (err) {
+    console.log("error : ", err);
+    const isTrusted = err instanceof createError;
+    if (!isTrusted) {
+      err = new createError(
+        httpStatus.Internal_Server_Error,
+        "SQL Script Error",
+        err.sqlMessage
+      );
+      console.log(err);
+    }
+    res.status(err.status).send(err);
+  }
+};
+
+module.exports.generateInvoice = async (req, res) => {
+  let userId = req.user.id;
+  let invoiceCode = req.params.invoiceCode;
+
+  let data = {};
+
+  try {
+    const GET_INVOICE_HEADER = `
+    SELECT
+    h.id,h.code, h.user_id, u.first_name, u.last_name, date_format(h.date, '%M %e, %Y') as created_date, date_format(h.expired_date, '%M %e, %Y') as expired_date, 
+    h.address_id, a.phone, a.address, a.city, a.province, a.postal_code, 
+	FORMAT(h.shopping_amount,2,'id_ID') as shopping_amount,
+    FORMAT(h.shipping_cost,2,'id_ID') as shipping_cost,
+    FORMAT(h.total_payment,2,'id_ID') as total_payment, 
+    h.payment_method,
+    h.status,  date_format(p.created_at, '%M %e, %Y') as payment_date
+        FROM invoice_headers h 
+        LEFT JOIN users u ON h.user_id = u.id
+        LEFT JOIN address a ON h.address_id = a.id
+        LEFT JOIN payments p ON p.invoice_id = h.id
+        WHERE h.user_id = ${database.escape(
+          userId
+        )} AND h.code= ${database.escape(invoiceCode)};`;
+
+    const [INVOICE_HEADER] = await database.execute(GET_INVOICE_HEADER);
+
+    const GET_INVOICE_ITEMS = `
+    SELECT
+    d.product_id, p.name, FORMAT(d.price,2,'id_ID') as price, d.amount, d.unit, 
+    FORMAT(CAST(d.amount * d.price AS decimal(15,2)),2,'id_ID') as total
+       FROM invoice_headers h 
+       LEFT JOIN invoice_details d ON h.id = d.invoice_header_id
+       LEFT JOIN products p ON d.product_id = p.id
+        WHERE h.user_id = ${database.escape(
+          userId
+        )} AND h.code= ${database.escape(invoiceCode)};`;
+
+    const [INVOICE_ITEMS] = await database.execute(GET_INVOICE_ITEMS);
+
+    data = {
+      ...data,
+      invoiceHeader: INVOICE_HEADER[0],
+      invoiceItems: INVOICE_ITEMS,
+    };
+
+    console.log(data);
+  } catch (err) {
+    console.log("error : ", err);
+    const isTrusted = err instanceof createError;
+    if (!isTrusted) {
+      err = new createError(
+        httpStatus.Internal_Server_Error,
+        "SQL Script Error",
+        err.sqlMessage
+      );
+      console.log(err);
+    }
+    res.status(err.status).send(err);
+  }
+
+  async function printPDF() {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    const content = await compile("index", data);
+    // console.log(content);
+    // await page.setContent("<h1>Hello</h1>");
+    await page.setContent(content);
+    // await page.emulateMediaType("screen");
+    const pdf = await page.pdf({ format: "A4" });
+    await browser.close();
+    return pdf;
+  }
+
+  printPDF().then((pdf) => {
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Length": pdf.length,
+    });
+    res.send(pdf);
+  });
+};

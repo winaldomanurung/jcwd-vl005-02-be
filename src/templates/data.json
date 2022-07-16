@@ -1,0 +1,24 @@
+{
+  "users": [
+    {
+      "name": "KANE WILLIAMSON",
+      "age": 32,
+      "country": "NEW ZEALAND"
+    },
+    {
+      "name": "ROSS TAYLOR",
+      "age": 38,
+      "country": "NEW ZEALAND"
+    },
+    {
+      "name": "TOM LATHAM",
+      "age": 31,
+      "country": "NEW ZEALAND"
+    },
+    {
+      "name": "TIM SOUTHEE",
+      "age": 33,
+      "country": "NEW ZEALAND"
+    }
+  ]
+}
