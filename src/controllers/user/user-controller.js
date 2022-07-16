@@ -10,6 +10,8 @@ const {
 const { createToken } = require("../../helpers/createToken");
 const transporter = require("../../helpers/nodemailer");
 // const { user } = require("..");
+
+
 // LOGIN
 module.exports.login = async (req, res) => {
   // username menampung nilai email dan username
@@ -39,7 +41,7 @@ module.exports.login = async (req, res) => {
     }
 
     // 4. create JWT token
-    const { email, status, id, uid } = USER[0];
+    const { email, status, id} = USER[0];
     console.log("emailku:", email);
     let token = createToken({ username, email, id });
     console.log("Token:", token);
@@ -255,23 +257,12 @@ module.exports.register = async (req, res) => {
     return res.status(500).send(error);
   }
 };
+
 // VERIFY USER
 module.exports.verifyUser = async (req, res) => {
   const id = req.user.id;
-  const token = req.header("Authorization");
-  const newToken = token.replace("Bearer ", "");
-  // const token = req.params.token
   try {
     console.log("id", id);
-    console.log("veriv token:", newToken);
-
-    const CHECK_TOKEN = `SELECT token FROM token WHERE id = ? AND token = ?;`;
-    const [TOKEN] = await db.execute(CHECK_TOKEN, [id, newToken]);
-
-    if (!TOKEN.length) {
-      console.log("invalid token");
-      return res.status(400).send(`Invalid token`);
-    }
     // change user status
     const UPDATE_USER = `UPDATE users SET is_verified ='verified' WHERE id = ?;`;
     const [INFO] = await db.execute(UPDATE_USER, [id]);
@@ -281,3 +272,28 @@ module.exports.verifyUser = async (req, res) => {
     return res.status(500).send(error);
   }
 };
+// module.exports.verifyUser = async (req, res) => {
+//   const id = req.user.id;
+//   const token = req.header("Authorization");
+//   // const newToken = token.replace("Bearer ", "");
+//   // const token = req.params.token
+//   try {
+//     console.log("id", id);
+//     console.log("veriv token:", newToken);
+
+//     const CHECK_TOKEN = `SELECT token FROM token WHERE id = ? AND token = ?;`;
+//     await db.execute(CHECK_TOKEN, [id, token]);
+
+//     // if (!TOKEN.length) {
+//     //   console.log("invalid token");
+//     //   return res.status(400).send(`Invalid token`);
+//     // }
+//     // change user status
+//     const UPDATE_USER = `UPDATE users SET is_verified ='verified' WHERE id = ?;`;
+//     const [INFO] = await db.execute(UPDATE_USER, [id]);
+//     res.status(200).send({ message: "Verified Account", success: true });
+//   } catch (error) {
+//     console.log("error:", error);
+//     return res.status(500).send(error);
+//   }
+// };

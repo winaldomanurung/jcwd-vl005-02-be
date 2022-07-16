@@ -11,7 +11,7 @@ module.exports.getAllTransactions = async (req, res) => {
     concat(u.first_name,' ', u.last_name) as customer_name,
     i.status,
     i.total_payment,
-    i.date,
+    date,
     p.picture_url as payment_proof 
     from invoice_headers i 
     left join users u on i.user_id = u.id 
@@ -29,7 +29,6 @@ module.exports.TransactionsByDateRange = async (req, res) => {
   const { startDate, endDate } = req.body;
   try {
     if (startDate === "" && endDate === "") {
-    
       return res.status(200).send(DATA[0]);
     }
     const TRANSACTIONS_BY_DATE_RANGE = `
@@ -150,6 +149,29 @@ module.exports.ChangeTransactionsStatus = async (req, res) => {
       const DATA = await db.execute(GET_ALL_TRANSACTIONS);
       res.status(200).send(DATA[0]);
     }
+  } catch (error) {
+    console.log("error:", error);
+    return res.status(500).send(error);
+  }
+};
+
+// GET PAYMENT PROOF  BY INVOICE ID
+module.exports.getTransactionsById = async (req, res) => {
+  const invoiceId = req.params.invoiceId;
+  try {
+    const GET_TRANSACTIONS_BY_INVOICEID = `
+    select i.id,
+    i.code,
+    concat(u.first_name,' ', u.last_name) as customer_name,
+    i.status,
+    i.total_payment,
+    i.date,
+    p.picture_url as payment_proof 
+    from invoice_headers i 
+    left join users u on i.user_id = u.id 
+    left join  payments p on i.id = p.invoice_id where i.id = ?`;
+    const [DATA] = await db.execute(GET_TRANSACTIONS_BY_INVOICEID, [invoiceId]);
+    res.status(200).send(DATA[0].payment_proof);
   } catch (error) {
     console.log("error:", error);
     return res.status(500).send(error);
