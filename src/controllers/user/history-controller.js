@@ -23,7 +23,7 @@ const compile = async function (templateName, data) {
     `${templateName}.hbs`
   );
   const html = await fs.readFile(filePath, "utf8");
-  console.log(html);
+  // console.log(html);
   return hbs.compile(html)(data);
 };
 
@@ -72,7 +72,7 @@ module.exports.readAllNotifications = async (req, res) => {
 
     const [NOTIFICATIONS] = await database.execute(GET_NOTIFICATIONS);
 
-    console.log(NOTIFICATIONS);
+    // console.log(NOTIFICATIONS);
 
     // create response
     const response = new createResponse(
@@ -144,7 +144,7 @@ module.exports.generateInvoice = async (req, res) => {
       invoiceItems: INVOICE_ITEMS,
     };
 
-    console.log(data);
+    // console.log(data);
   } catch (err) {
     console.log("error : ", err);
     const isTrusted = err instanceof createError;
@@ -179,4 +179,87 @@ module.exports.generateInvoice = async (req, res) => {
     });
     res.send(pdf);
   });
+};
+
+module.exports.readUnopenedNotifications = async (req, res) => {
+  let userId = req.user.id;
+
+  try {
+    const GET_UNOPENED_NOTIFICATIONS = `
+    SELECT *, date_format(created_at, '%M %e, %Y') as date FROM user_notifications
+        WHERE user_id = ${database.escape(
+          userId
+        )} AND opened=false ORDER BY created_at LIMIT 5;`;
+
+    const [UNOPENED_NOTIFICATIONS] = await database.execute(
+      GET_UNOPENED_NOTIFICATIONS
+    );
+
+    const GET_NOTIFICATIONS = `
+    SELECT *, date_format(created_at, '%M %e, %Y') as date FROM user_notifications
+        WHERE user_id = ${database.escape(userId)} AND opened=false;`;
+
+    const [NOTIFICATIONS] = await database.execute(GET_NOTIFICATIONS);
+
+    // create response
+    const response = new createResponse(
+      httpStatus.OK,
+      "Notification data fetched",
+      "Notification data fetched successfully!",
+      UNOPENED_NOTIFICATIONS,
+      NOTIFICATIONS.length
+    );
+
+    res.status(response.status).send(response);
+  } catch (err) {
+    console.log("error : ", err);
+    const isTrusted = err instanceof createError;
+    if (!isTrusted) {
+      err = new createError(
+        httpStatus.Internal_Server_Error,
+        "SQL Script Error",
+        err.sqlMessage
+      );
+      console.log(err);
+    }
+    res.status(err.status).send(err);
+  }
+};
+
+module.exports.openNotification = async (req, res) => {
+  let userId = req.user.id;
+  let notificationId = req.body.notificationId;
+
+  try {
+    const OPEN_NOTIFICATION = `
+    UPDATE user_notifications SET opened='true'
+    WHERE user_id=${database.escape(userId)} AND id=${database.escape(
+      notificationId
+    )};`;
+
+    const [OPENED_NOTIFICATION] = await database.execute(OPEN_NOTIFICATION);
+
+    // create response
+    const response = new createResponse(
+      httpStatus.OK,
+      "Notification data fetched",
+      "Notification data fetched successfully!",
+      OPENED_NOTIFICATION,
+      ""
+    );
+
+    res.status(response.status).send(response);
+  } catch (err) {
+    console.log("error : ", err);
+    const isTrusted = err instanceof createError;
+    if (!isTrusted) {
+      err = new createError(
+        httpStatus.Internal_Server_Error,
+        "SQL Script Error",
+        err.sqlMessage
+      );
+      console.log(err);
+    }
+    res.status(err.status).send(err);
+  }
 };
