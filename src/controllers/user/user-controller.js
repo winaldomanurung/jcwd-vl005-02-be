@@ -4,10 +4,14 @@ const db = require("../../config").promise();
 const {
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
+  forgotPasswordSchema,
 } = require("../../helpers/validation-schema");
 const { createToken } = require("../../helpers/createToken");
 const transporter = require("../../helpers/nodemailer");
 // const { user } = require("..");
+
+
 // LOGIN
 module.exports.login = async (req, res) => {
   // username menampung nilai email dan username
@@ -37,7 +41,7 @@ module.exports.login = async (req, res) => {
     }
 
     // 4. create JWT token
-    const { email, status, id, uid } = USER[0];
+    const { email, status, id} = USER[0];
     console.log("emailku:", email);
     let token = createToken({ username, email, id });
     console.log("Token:", token);
@@ -77,18 +81,23 @@ module.exports.keeplogin = async (req, res) => {
 
 // FORGET PASSWORD
 module.exports.forgetpassword = async (req, res) => {
-  const { emailUser, username } = req.body;
+  const { Email, username } = req.body;
   try {
+    // . verify req.body by our schema
+    const { error } = forgotPasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send(error.details[0].message);
+    }
     // check users
     const CHECK_USER = `SELECT * FROM users WHERE email = ?`;
-    const [USER] = await db.execute(CHECK_USER, [emailUser]);
+    const [USER] = await db.execute(CHECK_USER, [Email]);
     if (!USER.length) {
       return res.status(400).send("email not registered");
     }
 
     // user exist
     // bahan membuat token
-    const { email, id, uid } = USER[0];
+    const { email, id } = USER[0];
     console.log("emailku:", email);
     let token = createToken({ username, email, id });
     console.log("Token:", token);
@@ -121,19 +130,20 @@ module.exports.forgetpassword = async (req, res) => {
 
 // RESET PASSWORD
 module.exports.resetpassword = async (req, res) => {
-  const { email, password, repassword } = req.body;
+  const { password, repassword } = req.body;
+  const id = req.user.id;
+
   try {
+    console.log(id);
     // 1. verify password & repassword
     if (password !== repassword) {
       return res.status(400).send(`password and re-password doesn't match.`);
     }
-    // 2.check email
-    const CHECK_USER = `SELECT * FROM users WHERE email = ?`;
-    const [USER] = await db.execute(CHECK_USER, [email]);
-    if (!USER.length) {
-      return res.status(400).send("email not registered");
+    // 2. verify req.body by our schema
+    const { error } = resetPasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send(error.details[0].message);
     }
-    const { id } = USER[0];
     // 3. encypt-ing or hash-ing password
     const salt = await bcrypt.genSalt(10);
     console.log("salt : ", salt);
@@ -212,6 +222,12 @@ module.exports.register = async (req, res) => {
       let token = createToken({ username, email, status, id });
       console.log("Token:", token);
 
+      // store token into database
+      const INSERT_TOKEN = `INSERT INTO token(token) VALUES(${db.escape(
+        token
+      )});`;
+      await db.execute(INSERT_TOKEN);
+
       let mail = {
         from: `Admin <zilongbootcamp@gmail.com>`,
         to: `${email}`,
@@ -241,6 +257,7 @@ module.exports.register = async (req, res) => {
     return res.status(500).send(error);
   }
 };
+
 // VERIFY USER
 module.exports.verifyUser = async (req, res) => {
   const id = req.user.id;
@@ -255,3 +272,28 @@ module.exports.verifyUser = async (req, res) => {
     return res.status(500).send(error);
   }
 };
+// module.exports.verifyUser = async (req, res) => {
+//   const id = req.user.id;
+//   const token = req.header("Authorization");
+//   // const newToken = token.replace("Bearer ", "");
+//   // const token = req.params.token
+//   try {
+//     console.log("id", id);
+//     console.log("veriv token:", newToken);
+
+//     const CHECK_TOKEN = `SELECT token FROM token WHERE id = ? AND token = ?;`;
+//     await db.execute(CHECK_TOKEN, [id, token]);
+
+//     // if (!TOKEN.length) {
+//     //   console.log("invalid token");
+//     //   return res.status(400).send(`Invalid token`);
+//     // }
+//     // change user status
+//     const UPDATE_USER = `UPDATE users SET is_verified ='verified' WHERE id = ?;`;
+//     const [INFO] = await db.execute(UPDATE_USER, [id]);
+//     res.status(200).send({ message: "Verified Account", success: true });
+//   } catch (error) {
+//     console.log("error:", error);
+//     return res.status(500).send(error);
+//   }
+// };

@@ -25,13 +25,22 @@ module.exports.TransactionsByDateRange = async (req, res) => {
   const { startDate, endDate } = req.body;
   try {
     if (startDate === "" && endDate === "") {
-      // const GET_ALL_TRANSACTIONS = `SELECT * FROM dummy_transactions;`;
-      // const DATA = await db.execute(GET_ALL_TRANSACTIONS);
       return res.status(200).send(DATA[0]);
     }
-    const TRANSACTIONS_BY_DATE_RANGE = `SELECT * from dummy_transactions where date(payment_date) between date(${db.escape(
-      startDate
-    )}) and date(${db.escape(endDate)});`;
+    const TRANSACTIONS_BY_DATE_RANGE = `
+    select i.id,
+    i.code,
+    concat(u.first_name,' ', u.last_name) as customer_name,
+    i.status,
+    i.total_payment,
+    i.date,
+    p.picture_url as payment_proof from invoice_headers i 
+    left join users u on i.user_id = u.id 
+    left join  payments p on i.id = p.invoice_id
+    where date(date) between date(${db.escape(startDate)}) and date(${db.escape(
+      endDate
+    )});`;
+
     const DATA = await db.execute(TRANSACTIONS_BY_DATE_RANGE);
     console.log(startDate);
     console.log(endDate);
@@ -51,9 +60,19 @@ module.exports.TransactionsByMonth = async (req, res) => {
       // const DATA = await db.execute(GET_ALL_TRANSACTIONS);
       return res.status(200).send(DATA[0]);
     }
-    const TRANSACTIONS_BY_MONTH = `SELECT * FROM dummy_transactions WHERE DATE_FORMAT(payment_date,'%Y-%m') = ${db.escape(
-      month
-    )}`;
+    const TRANSACTIONS_BY_MONTH = `
+    select i.id,
+    i.code,
+    concat(u.first_name,' ', u.last_name) as customer_name,
+    i.status,
+    i.total_payment,
+    i.date,
+    p.picture_url as payment_proof 
+    from invoice_headers i 
+    left join users u on i.user_id = u.id 
+    left join payments p on i.id = p.invoice_id 
+    WHERE DATE_FORMAT(date,'%Y-%m') = ${db.escape(month)}`;
+
     const DATA = await db.execute(TRANSACTIONS_BY_MONTH);
     console.log(month);
     res.status(200).send(DATA[0]);
@@ -85,8 +104,8 @@ module.exports.ChangeTransactionsStatusApproved = async (req, res) => {
 
     const GET_NOTIFICATION_ID = `SELECT id FROM user_notifications 
     WHERE invoice_header_code=${db.escape(invoiceHeaderCode)}`;
+    console.log(GET_NOTIFICATION_ID);
     const NOTIFICATION_ID = await db.execute(GET_NOTIFICATION_ID);
-
     // Add or update notification
     if (!NOTIFICATION_ID[0].length) {
       const ADD_NOTIFICATION = `INSERT INTO user_notifications (user_id, message, invoice_header_id, invoice_header_code, opened)
@@ -107,13 +126,20 @@ module.exports.ChangeTransactionsStatusApproved = async (req, res) => {
 
     // res.status(200).send(status);
 
-    // if (month !== "") {
-    //   const TRANSACTIONS_BY_MONTH = `SELECT * FROM dummy_transactions WHERE DATE_FORMAT(payment_date,'%Y-%m') = ${db.escape(
-    //     month
-    //   )}`;
-    //   const DATA = await db.execute(TRANSACTIONS_BY_MONTH);
-    //   console.log(month);
-
+    if (month !== "") {
+      const TRANSACTIONS_BY_MONTH = `
+      select i.id,
+      i.code,
+      concat(u.first_name,' ', u.last_name) as customer_name,
+      i.status,
+      i.total_payment,
+      i.date,
+      p.picture_url as payment_proof 
+      from invoice_headers i 
+      left join users u on i.user_id = u.id 
+      left join payments p on i.id = p.invoice_id 
+      WHERE DATE_FORMAT(date,'%Y-%m') = ${db.escape(month)}`;
+    }
     //   res.status(200).send(DATA[0]);
     // } else if (startDate !== "" && endDate !== "") {
     //   const TRANSACTIONS_BY_DATE_RANGE = `SELECT * from dummy_transactions where date(payment_date) between date(${db.escape(
@@ -229,24 +255,23 @@ module.exports.ChangeTransactionsStatusRejected = async (req, res) => {
   }
 };
 
-// SELECT * FROM pharmastore.dummy_transactions;
-// -- DATE RANGE
-// SELECT * from dummy_transactions
-// where date(payment_date) between date('2021-01-03') and date('2021-12-05');
-
-// -- MONTH AND YEAR
-// SELECT * FROM dummy_transactions WHERE DATE_FORMAT(payment_date,'%Y-%m') = '2022-04'
-
-module.exports.getTransactionPayment = async (req, res) => {
-  let invoiceId = req.params.id;
-  console.log(invoiceId);
+// GET PAYMENT PROOF  BY INVOICE ID
+module.exports.getTransactionsById = async (req, res) => {
+  const invoiceId = req.params.invoiceId;
   try {
-    const GET_TRANSACTIONS_IMAGE = `SELECT picture_url FROM payments WHERE invoice_id=${db.escape(
-      invoiceId
-    )};`;
-    const IMAGE = await db.execute(GET_TRANSACTIONS_IMAGE);
-    console.log(IMAGE[0][0]["picture_url"]);
-    res.status(200).send(IMAGE[0][0]["picture_url"]);
+    const GET_TRANSACTIONS_BY_INVOICEID = `
+    select i.id,
+    i.code,
+    concat(u.first_name,' ', u.last_name) as customer_name,
+    i.status,
+    i.total_payment,
+    i.date,
+    p.picture_url as payment_proof 
+    from invoice_headers i 
+    left join users u on i.user_id = u.id 
+    left join  payments p on i.id = p.invoice_id where i.id = ?`;
+    const [DATA] = await db.execute(GET_TRANSACTIONS_BY_INVOICEID, [invoiceId]);
+    res.status(200).send(DATA[0].payment_proof);
   } catch (error) {
     console.log("error:", error);
     return res.status(500).send(error);

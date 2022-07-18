@@ -6,7 +6,10 @@ const { adminTransactionContoller } = require("../../controllers");
 
 // define route
 router.get("/transaction", adminTransactionContoller.getAllTransactions);
-router.get("/transaction/:id", adminTransactionContoller.getTransactionPayment);
+router.get(
+  "/transaction/:invoiceId",
+  adminTransactionContoller.getTransactionsById
+);
 router.post(
   "/transactiondaterange",
   adminTransactionContoller.TransactionsByDateRange
