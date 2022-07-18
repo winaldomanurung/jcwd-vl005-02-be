@@ -9,7 +9,6 @@ const {
 } = require("../../helpers/validation-schema");
 const { createToken } = require("../../helpers/createToken");
 const transporter = require("../../helpers/nodemailer");
-// const { user } = require("..");
 
 
 // LOGIN
@@ -39,7 +38,10 @@ module.exports.login = async (req, res) => {
     if (!valid) {
       return res.status(400).send("invalid password.");
     }
-
+    // check user status
+    if(USER[0].is_active == "banned"){
+      return res.status(400).send("Your account has been banned");
+    }
     // 4. create JWT token
     const { email, status, id} = USER[0];
     console.log("emailku:", email);

@@ -31,7 +31,7 @@ module.exports.editCategorySchema = Joi.object({
 });
 
 module.exports.loginSchema = Joi.object({
-  username: Joi.string().min(8),
+  username: Joi.string(),
   email: Joi.string().email(),
   password: Joi.string()
     // .min(8)

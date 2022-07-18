@@ -3,6 +3,7 @@ const adminCategoriesRouter = require("./admin/categories-router");
 const adminTransactionRouter = require("./admin/transactions-router")
 const adminReportRouter = require("./admin/reports-router")
 const adminManageUsersRouter = require("./admin/manage-users-router")
+const adminRouter = require("./admin/admin-router")
 const user_router = require("./user/user-routers");
 const userProductRouter = require("./user/products-router");
 const userCartRouter = require("./user/cart-router");
@@ -16,6 +17,7 @@ module.exports = {
   adminTransactionRouter,
   adminReportRouter,
   adminManageUsersRouter,
+  adminRouter,
   user_router,
   userProductRouter,
   userCartRouter,
