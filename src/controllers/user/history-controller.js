@@ -189,7 +189,7 @@ module.exports.readUnopenedNotifications = async (req, res) => {
     SELECT *, date_format(created_at, '%M %e, %Y') as date FROM user_notifications
         WHERE user_id = ${database.escape(
           userId
-        )} AND opened=false ORDER BY created_at LIMIT 5;`;
+        )} AND opened='false' ORDER BY created_at LIMIT 5;`;
 
     const [UNOPENED_NOTIFICATIONS] = await database.execute(
       GET_UNOPENED_NOTIFICATIONS
@@ -197,7 +197,7 @@ module.exports.readUnopenedNotifications = async (req, res) => {
 
     const GET_NOTIFICATIONS = `
     SELECT *, date_format(created_at, '%M %e, %Y') as date FROM user_notifications
-        WHERE user_id = ${database.escape(userId)} AND opened=false;`;
+        WHERE user_id = ${database.escape(userId)} AND opened='false';`;
 
     const [NOTIFICATIONS] = await database.execute(GET_NOTIFICATIONS);
 

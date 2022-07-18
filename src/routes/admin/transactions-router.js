@@ -16,8 +16,12 @@ router.post(
   adminTransactionContoller.TransactionsByMonth
 );
 router.patch(
-  "/changetransactionstatus",
-  adminTransactionContoller.ChangeTransactionsStatus
+  "/change-transaction-status-approved",
+  adminTransactionContoller.ChangeTransactionsStatusApproved
+);
+router.patch(
+  "/change-transaction-status-rejected",
+  adminTransactionContoller.ChangeTransactionsStatusRejected
 );
 
 module.exports = router;

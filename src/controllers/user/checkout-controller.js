@@ -460,7 +460,16 @@ module.exports.addInvoice = async (req, res) => {
       WHERE id=${database.escape(cartItem.product_id)};`;
       console.log(DECREASE_PRODUCT_STOCK);
 
+      const INCREASE_PRODUCT_SOLD = `
+      UPDATE products
+      SET sold = sold+${database.escape(
+        cartItem.amount
+      )}, sold_times= sold_times+1
+      WHERE id=${database.escape(cartItem.product_id)};`;
+      console.log(INCREASE_PRODUCT_SOLD);
+
       await database.execute(DECREASE_PRODUCT_STOCK);
+      await database.execute(INCREASE_PRODUCT_SOLD);
     });
 
     const DELETE_CART_ITEMS = `
