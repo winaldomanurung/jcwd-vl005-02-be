@@ -10,7 +10,7 @@ const { user } = require("../../controllers");
 router.post("/login", user.login);
 router.get("/keeplogin", autho, user.keeplogin);
 router.post("/forgotpassword", user.forgetpassword);
-router.post("/resetpassword", user.resetpassword);
+router.post("/resetpassword",auth, user.resetpassword);
 router.post("/register", user.register);
 router.patch("/verified", auth, user.verifyUser);
 
