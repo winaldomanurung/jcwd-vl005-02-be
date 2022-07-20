@@ -228,6 +228,7 @@ module.exports.updateProduct = async (req, res) => {
   const productId = req.params.productId;
   const body = req.body;
   console.log(productId, body);
+  const stock = req.body.stock;
 
   try {
     // 1. Check data apakah product exist di dalam database
@@ -266,6 +267,7 @@ module.exports.updateProduct = async (req, res) => {
 
     //  4. Buat query untuk update
     let query = [];
+    delete body.stock;
     for (let key in body) {
       query.push(`${key}='${body[key]}' `);
     }
@@ -275,6 +277,15 @@ module.exports.updateProduct = async (req, res) => {
     console.log(UPDATE_PRODUCT);
     const [UPDATED_PRODUCT] = await database.execute(UPDATE_PRODUCT);
     console.log(UPDATED_PRODUCT[0]);
+
+    const UPDATE_PRODUCT_STOCK = `
+    UPDATE products
+      SET stock_in_unit = (${database.escape(
+        stock
+      )}-stock)*volume + stock_in_unit, 
+      stock= ${database.escape(stock)}
+      WHERE id=${database.escape(productId)};`;
+    await database.execute(UPDATE_PRODUCT_STOCK);
 
     const [FIND_UPDATED_PRODUCT] = await database.execute(FIND_PRODUCT);
 

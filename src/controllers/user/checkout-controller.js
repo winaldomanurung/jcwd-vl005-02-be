@@ -451,6 +451,25 @@ module.exports.addInvoice = async (req, res) => {
       );`;
 
       const INVOICE_DETAIL_ADDED = await database.execute(ADD_INVOICE_DETAIL);
+
+      const DECREASE_PRODUCT_STOCK = `
+      UPDATE products
+      SET stock_in_unit = GREATEST(stock_in_unit-${database.escape(
+        cartItem.amount
+      )},0), stock= GREATEST(CEIL(stock_in_unit/volume),0)
+      WHERE id=${database.escape(cartItem.product_id)};`;
+      console.log(DECREASE_PRODUCT_STOCK);
+
+      const INCREASE_PRODUCT_SOLD = `
+      UPDATE products
+      SET sold = sold+${database.escape(
+        cartItem.amount
+      )}, sold_times= sold_times+1
+      WHERE id=${database.escape(cartItem.product_id)};`;
+      console.log(INCREASE_PRODUCT_SOLD);
+
+      await database.execute(DECREASE_PRODUCT_STOCK);
+      await database.execute(INCREASE_PRODUCT_SOLD);
     });
 
     const DELETE_CART_ITEMS = `
@@ -505,12 +524,14 @@ module.exports.readInvoice = async (req, res) => {
 
     const GET_INVOICE_ITEMS = `
     SELECT
-    h.id, h.code, h.user_id, date_format(h.date, '%M %e, %Y') as date, h.address_id, a.address, a.city, a.province, a.postal_code, h.shipping_cost, h.total_payment, h.payment_method,
-    h.status, d.invoice_header_id, d.product_id, p.name, d.price, d.amount, d.unit
+    h.id, h.code, h.user_id, u.first_name, u.last_name, a.phone, date_format(h.date, '%M %e, %Y') as date, date_format(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.shipping_cost, h.total_payment, h.payment_method,
+    h.status, d.invoice_header_id, d.product_id, p.name, d.price, d.amount, d.unit, date_format(py.created_at, '%M %e, %Y') as payment_date
         FROM invoice_headers h 
         LEFT JOIN invoice_details d ON h.id = d.invoice_header_id
         LEFT JOIN products p ON d.product_id = p.id
         LEFT JOIN address a ON h.address_id = a.id
+        LEFT JOIN users u ON h.user_id = u.id
+        LEFT JOIN payments py ON h.id = py.invoice_id
         WHERE h.user_id = ${database.escape(
           userId
         )} AND h.code= ${database.escape(invoiceCode)};`;

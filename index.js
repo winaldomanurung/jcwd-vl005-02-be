@@ -2,6 +2,10 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const bearerToken = require("express-bearer-token");
+const http = require("http");
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
 
 require("dotenv").config();
 
@@ -30,6 +34,7 @@ connection.connect((error) => {
   );
 });
 
+// Route middleware
 app.get("/", (req, res) => {
   res.send("<h1>TEST</h1>");
 });
@@ -46,6 +51,32 @@ app.use("/user/checkout", routers.userCheckoutRouter);
 app.use("/user/payment", routers.braintreeRouter);
 app.use("/user/history", routers.historyRouter);
 
-app.listen(port, () => {
-  console.log("Listening to Port: " + port);
+// Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
 });
+
+io.on("connection", (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
+  socket.on("join_channel", (data) => {
+    socket.join(data);
+    console.log(`${socket.id} is joining channel ${data}`);
+  });
+
+  socket.on("send_notification", (data) => {
+    console.log(data);
+    socket.to(data.channel).emit("receive_notification", data);
+  });
+});
+
+server.listen(2000, () => {
+  console.log("Socket.io server is running");
+});
+
+// app.listen(port, () => {
+//   console.log("Listening to Port: " + port);
+// });

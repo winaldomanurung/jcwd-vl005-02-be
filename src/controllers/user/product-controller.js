@@ -25,27 +25,27 @@ module.exports.readProducts = async (req, res) => {
     let highPrice;
     switch (parseInt(price)) {
       case 1:
-        lowPrice = 10;
+        lowPrice = 0;
         highPrice = 999999;
         break;
       case 2:
         lowPrice = 0;
-        highPrice = 9999;
+        highPrice = 249;
         break;
       case 3:
-        lowPrice = 10000;
-        highPrice = 19999;
+        lowPrice = 250;
+        highPrice = 499;
         break;
       case 4:
-        lowPrice = 20000;
-        highPrice = 29999;
+        lowPrice = 500;
+        highPrice = 999;
         break;
       case 5:
-        lowPrice = 30000;
-        highPrice = 39999;
+        lowPrice = 1000;
+        highPrice = 2000;
         break;
       case 6:
-        lowPrice = 40000;
+        lowPrice = 2000;
         highPrice = 999999;
         break;
       default:
