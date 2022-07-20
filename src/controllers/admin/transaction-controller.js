@@ -6,11 +6,10 @@ const db = require("../../config").promise();
 module.exports.getAllTransactions = async (req, res) => {
   try {
     const GET_ALL_TRANSACTIONS = `SELECT
-    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
+    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
     h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
         FROM invoice_headers h 
         LEFT JOIN users u ON h.user_id = u.id
-        LEFT JOIN address a ON h.address_id = a.id
         LEFT JOIN payments p ON h.id = p.invoice_id;`;
     const DATA = await db.execute(GET_ALL_TRANSACTIONS);
     res.status(200).send(DATA[0]);
@@ -151,11 +150,10 @@ module.exports.ChangeTransactionsStatusApproved = async (req, res) => {
     //   res.status(200).send(DATA[0]);
     // } else {
     const GET_ALL_TRANSACTIONS = `SELECT
-    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
+    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
     h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
         FROM invoice_headers h 
         LEFT JOIN users u ON h.user_id = u.id
-        LEFT JOIN address a ON h.address_id = a.id
         LEFT JOIN payments p ON h.id = p.invoice_id;`;
     const DATA = await db.execute(GET_ALL_TRANSACTIONS);
     res.status(200).send(DATA[0]);
@@ -220,31 +218,23 @@ module.exports.ChangeTransactionsStatusRejected = async (req, res) => {
     console.log("CHECKOUT_ITEMS");
     console.log(CHECKOUT_ITEMS[0]);
 
-    CHECKOUT_ITEMS[0].map(async (cartItem) => {
+    CHECKOUT_ITEMS[0].map(async (item) => {
       const INCREASE_PRODUCT_STOCK = `
     UPDATE products
     SET stock_in_unit=stock_in_unit+${db.escape(
-      cartItem.amount
+      item.amount
     )}, stock=GREATEST(CEIL(stock_in_unit/volume),0)
-    WHERE id=${db.escape(cartItem.product_id)};`;
+    WHERE id=${db.escape(item.product_id)};`;
       console.log(INCREASE_PRODUCT_STOCK);
 
-      const DECREASE_PRODUCT_SOLD = `
-    UPDATE products
-    SET sold=sold-${db.escape(cartItem.amount)}, sold_times=sold_times-1
-    WHERE id=${db.escape(cartItem.product_id)};`;
-      console.log(DECREASE_PRODUCT_SOLD);
-
       await db.execute(INCREASE_PRODUCT_STOCK);
-      await db.execute(DECREASE_PRODUCT_SOLD);
     });
 
     const GET_ALL_TRANSACTIONS = `SELECT
-    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
+    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
     h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
         FROM invoice_headers h 
         LEFT JOIN users u ON h.user_id = u.id
-        LEFT JOIN address a ON h.address_id = a.id
         LEFT JOIN payments p ON h.id = p.invoice_id;`;
     const DATA = await db.execute(GET_ALL_TRANSACTIONS);
     res.status(200).send(DATA[0]);
