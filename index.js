@@ -50,6 +50,7 @@ app.use("/user/cart", routers.userCartRouter);
 app.use("/user/checkout", routers.userCheckoutRouter);
 app.use("/user/payment", routers.braintreeRouter);
 app.use("/user/history", routers.historyRouter);
+app.use("/user/address", routers.addressRouter);
 
 // Socket.io
 const io = new Server(server, {

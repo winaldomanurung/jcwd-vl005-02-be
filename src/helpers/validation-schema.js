@@ -45,7 +45,9 @@ module.exports.loginSchema = Joi.object({
 module.exports.registerSchema = Joi.object({
   username: Joi.string().min(8).alphanum().required(),
   email: Joi.string().email().required(),
-  firstName: Joi.string().required().error(new Error('Give your error message here for first name')),
+  firstName: Joi.string()
+    .required()
+    .error(new Error("Give your error message here for first name")),
   lastName: Joi.string().required(),
   password: Joi.string()
     .min(8)
@@ -72,6 +74,15 @@ module.exports.forgotPasswordSchema = Joi.object({
   Email: Joi.string().email().required(),
 });
 module.exports.addAddressSchema = Joi.object({
+  label: Joi.string().min(3).max(50).required(),
+  address: Joi.string().min(3).max(200).required(),
+  phone: Joi.number().required(),
+  city: Joi.string().min(3).max(50).required(),
+  postal_code: Joi.number().required(),
+  province: Joi.string().min(3).max(50).required(),
+});
+
+module.exports.editAddressSchema = Joi.object({
   label: Joi.string().min(3).max(50).required(),
   address: Joi.string().min(3).max(200).required(),
   phone: Joi.number().required(),
