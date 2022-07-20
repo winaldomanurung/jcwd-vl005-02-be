@@ -5,17 +5,13 @@ const db = require("../../config").promise();
 // 1.GET ALL DATA TRANSACTIONS
 module.exports.getAllTransactions = async (req, res) => {
   try {
-    const GET_ALL_TRANSACTIONS = `
-    select i.id,
-    i.code,
-    concat(u.first_name,' ', u.last_name) as customer_name,
-    i.status,
-    i.total_payment,
-    date,
-    p.picture_url as payment_proof 
-    from invoice_headers i 
-    left join users u on i.user_id = u.id 
-    left join  payments p on i.id = p.invoice_id`;
+    const GET_ALL_TRANSACTIONS = `SELECT
+    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
+    h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+        FROM invoice_headers h 
+        LEFT JOIN users u ON h.user_id = u.id
+        LEFT JOIN address a ON h.address_id = a.id
+        LEFT JOIN payments p ON h.id = p.invoice_id;`;
     const DATA = await db.execute(GET_ALL_TRANSACTIONS);
     res.status(200).send(DATA[0]);
   } catch (error) {
@@ -87,14 +83,46 @@ module.exports.TransactionsByMonth = async (req, res) => {
 };
 
 // 4. CHANGE TRANSACTION STATUS
-module.exports.ChangeTransactionsStatus = async (req, res) => {
-  const { id, status, month, startDate, endDate } = req.body;
+module.exports.ChangeTransactionsStatusApproved = async (req, res) => {
+  const {
+    id,
+    status,
+    month,
+    startDate,
+    endDate,
+    userId,
+    message,
+    invoiceHeaderId,
+    invoiceHeaderCode,
+  } = req.body;
   try {
     const CHANGE_TRANSACTIONS_STATUS = `UPDATE invoice_headers SET status = ${db.escape(
       status
     )} WHERE id = ${db.escape(id)};`;
 
     await db.execute(CHANGE_TRANSACTIONS_STATUS);
+
+    const GET_NOTIFICATION_ID = `SELECT id FROM user_notifications 
+    WHERE invoice_header_code=${db.escape(invoiceHeaderCode)}`;
+    console.log(GET_NOTIFICATION_ID);
+    const NOTIFICATION_ID = await db.execute(GET_NOTIFICATION_ID);
+    // Add or update notification
+    if (!NOTIFICATION_ID[0].length) {
+      const ADD_NOTIFICATION = `INSERT INTO user_notifications (user_id, message, invoice_header_id, invoice_header_code, opened)
+    VALUES (
+    ${db.escape(userId)}, ${db.escape(message)}, ${db.escape(
+        invoiceHeaderId
+      )}, ${db.escape(invoiceHeaderCode)}, 'false');`;
+
+      await db.execute(ADD_NOTIFICATION);
+    } else {
+      let notificationId = NOTIFICATION_ID[0][0].id;
+      const UPDATE_NOTIFICATION = `
+        UPDATE user_notifications
+        SET message = ${db.escape(message)}, opened='false'
+        WHERE id=${db.escape(notificationId)};`;
+      await db.execute(UPDATE_NOTIFICATION);
+    }
 
     // res.status(200).send(status);
 
@@ -111,44 +139,116 @@ module.exports.ChangeTransactionsStatus = async (req, res) => {
       left join users u on i.user_id = u.id 
       left join payments p on i.id = p.invoice_id 
       WHERE DATE_FORMAT(date,'%Y-%m') = ${db.escape(month)}`;
-
-      const DATA = await db.execute(TRANSACTIONS_BY_MONTH);
-      console.log(month);
-      res.status(200).send(DATA[0]);
-    } else if (startDate !== "" && endDate !== "") {
-      const TRANSACTIONS_BY_DATE_RANGE = `
-      select i.id,
-      i.code,
-      concat(u.first_name,' ', u.last_name) as customer_name,
-      i.status,
-      i.total_payment,
-      i.date,
-      p.picture_url as payment_proof from invoice_headers i 
-      left join users u on i.user_id = u.id 
-      left join  payments p on i.id = p.invoice_id
-      where date(date) between date(${db.escape(
-        startDate
-      )}) and date(${db.escape(endDate)});`;
-
-      const DATA = await db.execute(TRANSACTIONS_BY_DATE_RANGE);
-      console.log(startDate);
-      console.log(endDate);
-      res.status(200).send(DATA[0]);
-    } else {
-      const GET_ALL_TRANSACTIONS = `
-      select i.id,
-      i.code,
-      concat(u.first_name,' ', u.last_name) as customer_name,
-      i.status,
-      i.total_payment,
-      i.date,
-      p.picture_url as payment_proof 
-      from invoice_headers i 
-      left join users u on i.user_id = u.id 
-      left join  payments p on i.id = p.invoice_id`;
-      const DATA = await db.execute(GET_ALL_TRANSACTIONS);
-      res.status(200).send(DATA[0]);
     }
+    //   res.status(200).send(DATA[0]);
+    // } else if (startDate !== "" && endDate !== "") {
+    //   const TRANSACTIONS_BY_DATE_RANGE = `SELECT * from dummy_transactions where date(payment_date) between date(${db.escape(
+    //     startDate
+    //   )}) and date(${db.escape(endDate)});`;
+    //   const DATA = await db.execute(TRANSACTIONS_BY_DATE_RANGE);
+    //   console.log(startDate);
+    //   console.log(endDate);
+    //   res.status(200).send(DATA[0]);
+    // } else {
+    const GET_ALL_TRANSACTIONS = `SELECT
+    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
+    h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+        FROM invoice_headers h 
+        LEFT JOIN users u ON h.user_id = u.id
+        LEFT JOIN address a ON h.address_id = a.id
+        LEFT JOIN payments p ON h.id = p.invoice_id;`;
+    const DATA = await db.execute(GET_ALL_TRANSACTIONS);
+    res.status(200).send(DATA[0]);
+    // }
+  } catch (error) {
+    console.log("error:", error);
+    return res.status(500).send(error);
+  }
+};
+
+module.exports.ChangeTransactionsStatusRejected = async (req, res) => {
+  const {
+    id,
+    status,
+    month,
+    startDate,
+    endDate,
+    userId,
+    message,
+    invoiceHeaderId,
+    invoiceHeaderCode,
+  } = req.body;
+  try {
+    const CHANGE_TRANSACTIONS_STATUS = `UPDATE invoice_headers SET status = ${db.escape(
+      status
+    )} WHERE id = ${db.escape(id)};`;
+
+    await db.execute(CHANGE_TRANSACTIONS_STATUS);
+
+    const GET_NOTIFICATION_ID = `SELECT id FROM user_notifications 
+    WHERE invoice_header_code=${db.escape(invoiceHeaderCode)}`;
+    console.log(GET_NOTIFICATION_ID);
+    const NOTIFICATION_ID = await db.execute(GET_NOTIFICATION_ID);
+    // console.log(NOTIFICATION_ID[0].length);
+    // console.log(NOTIFICATION_ID[0][0].length);
+
+    // Add or update notification
+    if (!NOTIFICATION_ID[0].length) {
+      const ADD_NOTIFICATION = `INSERT INTO user_notifications (user_id, message, invoice_header_id, invoice_header_code, opened)
+    VALUES (
+    ${db.escape(userId)}, ${db.escape(message)}, ${db.escape(
+        invoiceHeaderId
+      )}, ${db.escape(invoiceHeaderCode)}, 'false');`;
+
+      await db.execute(ADD_NOTIFICATION);
+    } else {
+      let notificationId = NOTIFICATION_ID[0][0].id;
+      const UPDATE_NOTIFICATION = `
+        UPDATE user_notifications
+        SET message = ${db.escape(message)}, opened='false'
+        WHERE id=${db.escape(notificationId)};`;
+      await db.execute(UPDATE_NOTIFICATION);
+    }
+
+    const GET_CHECKOUT_ITEMS = `
+    SELECT *
+    FROM invoice_details
+    WHERE invoice_header_id = ${db.escape(invoiceHeaderId)};`;
+
+    const CHECKOUT_ITEMS = await db.execute(GET_CHECKOUT_ITEMS);
+
+    console.log("CHECKOUT_ITEMS");
+    console.log(CHECKOUT_ITEMS[0]);
+
+    CHECKOUT_ITEMS[0].map(async (cartItem) => {
+      const INCREASE_PRODUCT_STOCK = `
+    UPDATE products
+    SET stock_in_unit=stock_in_unit+${db.escape(
+      cartItem.amount
+    )}, stock=GREATEST(CEIL(stock_in_unit/volume),0)
+    WHERE id=${db.escape(cartItem.product_id)};`;
+      console.log(INCREASE_PRODUCT_STOCK);
+
+      const DECREASE_PRODUCT_SOLD = `
+    UPDATE products
+    SET sold=sold-${db.escape(cartItem.amount)}, sold_times=sold_times-1
+    WHERE id=${db.escape(cartItem.product_id)};`;
+      console.log(DECREASE_PRODUCT_SOLD);
+
+      await db.execute(INCREASE_PRODUCT_STOCK);
+      await db.execute(DECREASE_PRODUCT_SOLD);
+    });
+
+    const GET_ALL_TRANSACTIONS = `SELECT
+    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.total_payment, h.payment_method,
+    h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+        FROM invoice_headers h 
+        LEFT JOIN users u ON h.user_id = u.id
+        LEFT JOIN address a ON h.address_id = a.id
+        LEFT JOIN payments p ON h.id = p.invoice_id;`;
+    const DATA = await db.execute(GET_ALL_TRANSACTIONS);
+    res.status(200).send(DATA[0]);
+    // }
   } catch (error) {
     console.log("error:", error);
     return res.status(500).send(error);

@@ -1,0 +1,144 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Puppeteer PDF Generation Using Handlebars Template</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container p-3">
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="invoice-title">
+            <h2>Invoice: {{invoiceHeader.code}}</h2>
+          </div>
+          <hr />
+
+          <div class="row">
+            <div class="col-xs-6">
+              <address>
+                <strong>Billed To:</strong><br />
+                {{invoiceHeader.first_name}}
+                {{invoiceHeader.last_name}}<br />
+                {{invoiceHeader.address}}<br />
+                {{invoiceHeader.city}},
+                {{invoiceHeader.province}}<br />
+                {{invoiceHeader.postal_code}}<br />
+                {{invoiceHeader.phone}}
+              </address>
+            </div>
+            <div class="col-xs-6 text-right">
+              <address>
+                <strong>Shipped From:</strong><br />
+                Pharmastore<br />
+                JL Tebet Barat Dalam Raya<br />
+                No. 153-A, Jakarta, 12810<br />
+                021-827607672
+              </address>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-6">
+              <address>
+                <strong>Payment Method:</strong><br />
+                {{invoiceHeader.payment_method}}
+              </address>
+              <address>
+                <strong>Payment Date:</strong><br />
+                {{#if invoiceHeader.payment_date includeZero=true}}
+                  {{invoiceHeader.payment_date}}
+                {{else}}
+                  Waiting for payment
+                {{/if}}
+              </address>
+            </div>
+            <div class="col-xs-6 text-right">
+              <address>
+                <strong>Order Date:</strong><br />
+                {{invoiceHeader.created_date}}
+              </address>
+              <address>
+                <strong>Expired Date:</strong><br />
+                {{invoiceHeader.expired_date}}
+              </address>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title"><strong>Order summary</strong></h3>
+            </div>
+            <div class="panel-body">
+              <div class="table-responsive">
+                <table class="table table-condensed">
+                  <thead>
+                    <tr>
+                      <td><strong>Item</strong></td>
+                      <td class="text-center"><strong>Quantity</strong></td>
+                      <td class="text-center"><strong>Price per unit</strong></td>
+                      <td class="text-right"><strong>Amount</strong></td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- foreach ($order->lineItems as $line) or some such thing here -->
+                    {{#each invoiceItems as |item|}}
+                      <tr>
+                        <td>{{item.name}}</td>
+                        <td class="text-center">{{item.amount}}
+                          {{item.unit}}</td>
+                        <td class="text-center">Rp
+                          {{item.price}}/{{item.unit}}</td>
+                        <td class="text-right">Rp {{item.total}}</td>
+                      </tr>
+                    {{/each}}
+                    <tr>
+                      <td class="thick-line"></td>
+                      <td class="thick-line"></td>
+                      <td class="thick-line text-center">
+                        <strong>Subtotal</strong>
+                      </td>
+                      <td class="thick-line text-right">Rp
+                        {{invoiceHeader.shopping_amount}}</td>
+                    </tr>
+                    <tr>
+                      <td class="no-line"></td>
+                      <td class="no-line"></td>
+                      <td class="no-line text-center">
+                        <strong>Shipping</strong>
+                      </td>
+                      <td class="no-line text-right">Rp
+                        {{invoiceHeader.shipping_cost}}</td>
+                    </tr>
+                    <tr>
+                      <td class="no-line"></td>
+                      <td class="no-line"></td>
+                      <td class="no-line text-center">
+                        <strong>Total</strong>
+                      </td>
+                      <td class="no-line text-right">Rp
+                        {{invoiceHeader.total_payment}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-heading">
+      <h3 class="panel-title p-3 mb-2 bg-danger text-white"><strong>Status:
+          {{invoiceHeader.status}}</strong></h3>
+    </div>
+
+  </body>
+</html>
