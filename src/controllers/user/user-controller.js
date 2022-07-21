@@ -10,7 +10,6 @@ const {
 const { createToken } = require("../../helpers/createToken");
 const transporter = require("../../helpers/nodemailer");
 
-
 // LOGIN
 module.exports.login = async (req, res) => {
   // username menampung nilai email dan username
@@ -39,11 +38,11 @@ module.exports.login = async (req, res) => {
       return res.status(400).send("invalid password.");
     }
     // check user status
-    if(USER[0].is_active == "banned"){
+    if (USER[0].is_active == "banned") {
       return res.status(400).send("Your account has been banned");
     }
     // 4. create JWT token
-    const { email, status, id} = USER[0];
+    const { email, status, id } = USER[0];
     console.log("emailku:", email);
     let token = createToken({ username, email, id });
     console.log("Token:", token);
@@ -167,6 +166,7 @@ module.exports.resetpassword = async (req, res) => {
   }
 };
 
+// REGISTER
 module.exports.register = async (req, res) => {
   const { username, email, firstName, lastName, password, repassword } =
     req.body;
@@ -299,3 +299,48 @@ module.exports.verifyUser = async (req, res) => {
 //     return res.status(500).send(error);
 //   }
 // };
+
+// RESEND EMAIL VERIFICATION
+
+module.exports.resendemail = async (req, res) => {
+  const { is_verified, email, id } = req.body;
+  try {
+    let token = createToken({ email, id, is_verified });
+    console.log("Token:", token);
+    // store token into database
+    // const INSERT_TOKEN = `INSERT INTO token(token) VALUES(${db.escape(
+    //   token
+    // )});`;
+    // await db.execute(INSERT_TOKEN);
+    let mail = {
+      from: `Admin <zilongbootcamp@gmail.com>`,
+      to: `${email}`,
+      subject: `Account verification`,
+      html: `<a href='http://localhost:3000/authentication/${token}'> Click here for verification your account</a>`,
+    };
+
+    transporter.sendMail(mail, (errMail, resmail) => {
+      if (errMail) {
+        console.log(errMail);
+        return res.status(500).send({
+          message: "Resend email verification failed",
+          success: false,
+          err: errMail,
+        });
+      }
+      return res.status(200).send({
+        message: "Resend email verification success,check your email",
+        success: true,
+      });
+    });
+
+    return res
+      .status(200)
+      .send(
+        "Resend email verification success,check your email to verify your account."
+      );
+  } catch (error) {
+    console.log("error:", error);
+    return res.status(500).send(error);
+  }
+};

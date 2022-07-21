@@ -9,9 +9,9 @@ const { adminController } = require("../../controllers");
 // define route
 router.post("/login",adminController.loginadmin);
 router.get("/currentadmin", authorization, adminController.currentadmin);
-// router.post("/forgotpassword", user.forgetpassword);
-// router.post("/resetpassword",auth, user.resetpassword);
-// router.post("/register", user.register);
+router.post("/forgetpassword",adminController.forgetpassword);
+router.post("/resetpassword",auth, adminController.resetpassword);
+router.post("/addnewadmin", adminController.addnewadmin);
 // router.patch("/verified", auth, user.verifyUser);
 
 // export * modules
