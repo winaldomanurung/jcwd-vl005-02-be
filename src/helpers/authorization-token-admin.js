@@ -1,6 +1,4 @@
 const JWT = require("jsonwebtoken");
-// const http_status = require('./http-status-code')
-// const createError = require('./create-error')
 
 module.exports = (req, res, next) => {
   const tokenAdmin = req.header("Auth-Token-Admin");

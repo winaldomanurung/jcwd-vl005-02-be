@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
 
     // verify token
     const { id } = JWT.verify(token, "private123");
-    console.log(id)
+    // console.log(id)
 
     let userData = { user: { id: id } };
     // modifed object req

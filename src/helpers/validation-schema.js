@@ -33,13 +33,7 @@ module.exports.editCategorySchema = Joi.object({
 module.exports.loginSchema = Joi.object({
   username: Joi.string(),
   email: Joi.string().email(),
-  password: Joi.string()
-    // .min(8)
-    // .pattern(/[!@#$%&*_!]/)
-    // .pattern(/[A-Z]/)
-    // .pattern(/[a-z]/)
-    // .pattern(/[0-9]/)
-    .required(),
+  password: Joi.string().required(),
 });
 
 module.exports.registerSchema = Joi.object({
