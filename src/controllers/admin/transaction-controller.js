@@ -6,7 +6,7 @@ const db = require("../../config").promise();
 module.exports.getAllTransactions = async (req, res) => {
   try {
     const GET_ALL_TRANSACTIONS = `SELECT
-    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
+    h.id, h.code, h.user_id, CONCAT(u.first_name, ' ', u.last_name) AS name, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
     h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
         FROM invoice_headers h 
         LEFT JOIN users u ON h.user_id = u.id
@@ -27,15 +27,12 @@ module.exports.TransactionsByDateRange = async (req, res) => {
       return res.status(200).send(DATA[0]);
     }
     const TRANSACTIONS_BY_DATE_RANGE = `
-    select i.id,
-    i.code,
-    concat(u.first_name,' ', u.last_name) as customer_name,
-    i.status,
-    i.total_payment,
-    i.date,
-    p.picture_url as payment_proof from invoice_headers i 
-    left join users u on i.user_id = u.id 
-    left join  payments p on i.id = p.invoice_id
+    SELECT
+    h.id, h.code, h.user_id, CONCAT(u.first_name, ' ', u.last_name) AS name , h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
+    h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+        FROM invoice_headers h 
+        LEFT JOIN users u ON h.user_id = u.id
+        LEFT JOIN payments p ON h.id = p.invoice_id
     where date(date) between date(${db.escape(startDate)}) and date(${db.escape(
       endDate
     )});`;
@@ -55,21 +52,15 @@ module.exports.TransactionsByMonth = async (req, res) => {
   const { month } = req.body;
   try {
     if (!month.length) {
-      // const GET_ALL_TRANSACTIONS = `SELECT * FROM dummy_transactions;`;
-      // const DATA = await db.execute(GET_ALL_TRANSACTIONS);
       return res.status(200).send(DATA[0]);
     }
     const TRANSACTIONS_BY_MONTH = `
-    select i.id,
-    i.code,
-    concat(u.first_name,' ', u.last_name) as customer_name,
-    i.status,
-    i.total_payment,
-    i.date,
-    p.picture_url as payment_proof 
-    from invoice_headers i 
-    left join users u on i.user_id = u.id 
-    left join payments p on i.id = p.invoice_id 
+    SELECT
+    h.id, h.code, h.user_id, CONCAT(u.first_name, ' ', u.last_name) AS name, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
+    h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+        FROM invoice_headers h 
+        LEFT JOIN users u ON h.user_id = u.id
+        LEFT JOIN payments p ON h.id = p.invoice_id
     WHERE DATE_FORMAT(date,'%Y-%m') = ${db.escape(month)}`;
 
     const DATA = await db.execute(TRANSACTIONS_BY_MONTH);
@@ -127,36 +118,42 @@ module.exports.ChangeTransactionsStatusApproved = async (req, res) => {
 
     if (month !== "") {
       const TRANSACTIONS_BY_MONTH = `
-      select i.id,
-      i.code,
-      concat(u.first_name,' ', u.last_name) as customer_name,
-      i.status,
-      i.total_payment,
-      i.date,
-      p.picture_url as payment_proof 
-      from invoice_headers i 
-      left join users u on i.user_id = u.id 
-      left join payments p on i.id = p.invoice_id 
+      SELECT
+      h.id, h.code, h.user_id,CONCAT(u.first_name, ' ', u.last_name) AS name, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
+      h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+          FROM invoice_headers h 
+          LEFT JOIN users u ON h.user_id = u.id
+          LEFT JOIN payments p ON h.id = p.invoice_id
       WHERE DATE_FORMAT(date,'%Y-%m') = ${db.escape(month)}`;
-    }
-    //   res.status(200).send(DATA[0]);
-    // } else if (startDate !== "" && endDate !== "") {
-    //   const TRANSACTIONS_BY_DATE_RANGE = `SELECT * from dummy_transactions where date(payment_date) between date(${db.escape(
-    //     startDate
-    //   )}) and date(${db.escape(endDate)});`;
-    //   const DATA = await db.execute(TRANSACTIONS_BY_DATE_RANGE);
-    //   console.log(startDate);
-    //   console.log(endDate);
-    //   res.status(200).send(DATA[0]);
-    // } else {
-    const GET_ALL_TRANSACTIONS = `SELECT
-    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
+      const DATA = await db.execute(TRANSACTIONS_BY_MONTH);
+      res.status(200).send(DATA[0]);
+    } else if (startDate !== "" && endDate !== "") {
+      const TRANSACTIONS_BY_DATE_RANGE = `
+    SELECT
+    h.id, h.code, h.user_id,CONCAT(u.first_name, ' ', u.last_name) AS name, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
     h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
         FROM invoice_headers h 
         LEFT JOIN users u ON h.user_id = u.id
-        LEFT JOIN payments p ON h.id = p.invoice_id;`;
-    const DATA = await db.execute(GET_ALL_TRANSACTIONS);
-    res.status(200).send(DATA[0]);
+        LEFT JOIN payments p ON h.id = p.invoice_id
+    where date(date) between date(${db.escape(startDate)}) and date(${db.escape(
+        endDate
+      )});`;
+
+      const DATA = await db.execute(TRANSACTIONS_BY_DATE_RANGE);
+      console.log(startDate);
+      console.log(endDate);
+      res.status(200).send(DATA[0]);
+    } else {
+      const GET_ALL_TRANSACTIONS = `SELECT
+      h.id, h.code, h.user_id,CONCAT(u.first_name, ' ', u.last_name) AS name, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
+      h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+          FROM invoice_headers h 
+          LEFT JOIN users u ON h.user_id = u.id
+          LEFT JOIN payments p ON h.id = p.invoice_id;`;
+      const DATA = await db.execute(GET_ALL_TRANSACTIONS);
+      res.status(200).send(DATA[0]);
+    }
+
     // }
   } catch (error) {
     console.log("error:", error);
@@ -229,16 +226,43 @@ module.exports.ChangeTransactionsStatusRejected = async (req, res) => {
 
       await db.execute(INCREASE_PRODUCT_STOCK);
     });
-
-    const GET_ALL_TRANSACTIONS = `SELECT
-    h.id, h.code, h.user_id, u.username, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
+    if (month !== "") {
+      const TRANSACTIONS_BY_MONTH = `
+      SELECT
+      h.id, h.code, h.user_id,CONCAT(u.first_name, ' ', u.last_name) AS name, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
+      h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+          FROM invoice_headers h 
+          LEFT JOIN users u ON h.user_id = u.id
+          LEFT JOIN payments p ON h.id = p.invoice_id
+      WHERE DATE_FORMAT(date,'%Y-%m') = ${db.escape(month)}`;
+      const DATA = await db.execute(TRANSACTIONS_BY_MONTH);
+      res.status(200).send(DATA[0]);
+    } else if (startDate !== "" && endDate !== "") {
+      const TRANSACTIONS_BY_DATE_RANGE = `
+    SELECT
+    h.id, h.code, h.user_id,CONCAT(u.first_name, ' ', u.last_name) AS name, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
     h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
         FROM invoice_headers h 
         LEFT JOIN users u ON h.user_id = u.id
-        LEFT JOIN payments p ON h.id = p.invoice_id;`;
-    const DATA = await db.execute(GET_ALL_TRANSACTIONS);
-    res.status(200).send(DATA[0]);
-    // }
+        LEFT JOIN payments p ON h.id = p.invoice_id
+    where date(date) between date(${db.escape(startDate)}) and date(${db.escape(
+        endDate
+      )});`;
+
+      const DATA = await db.execute(TRANSACTIONS_BY_DATE_RANGE);
+      console.log(startDate);
+      console.log(endDate);
+      res.status(200).send(DATA[0]);
+    } else {
+      const GET_ALL_TRANSACTIONS = `SELECT
+      h.id, h.code, h.user_id,CONCAT(u.first_name, ' ', u.last_name) AS name, h.date, DATE_FORMAT(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.total_payment, h.payment_method,
+      h.status, h.total_payment, p.picture_url, DATE_FORMAT(p.created_at, '%M %e, %Y') as created_at, expired_date as exp_date_in_js
+          FROM invoice_headers h 
+          LEFT JOIN users u ON h.user_id = u.id
+          LEFT JOIN payments p ON h.id = p.invoice_id;`;
+      const DATA = await db.execute(GET_ALL_TRANSACTIONS);
+      res.status(200).send(DATA[0]);
+    }
   } catch (error) {
     console.log("error:", error);
     return res.status(500).send(error);

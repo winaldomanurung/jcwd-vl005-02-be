@@ -31,15 +31,9 @@ module.exports.editCategorySchema = Joi.object({
 });
 
 module.exports.loginSchema = Joi.object({
-  username: Joi.string().min(8),
+  username: Joi.string(),
   email: Joi.string().email(),
-  password: Joi.string()
-    // .min(8)
-    // .pattern(/[!@#$%&*_!]/)
-    // .pattern(/[A-Z]/)
-    // .pattern(/[a-z]/)
-    // .pattern(/[0-9]/)
-    .required(),
+  password: Joi.string().required(),
 });
 
 module.exports.registerSchema = Joi.object({
@@ -73,6 +67,21 @@ module.exports.resetPasswordSchema = Joi.object({
 module.exports.forgotPasswordSchema = Joi.object({
   Email: Joi.string().email().required(),
 });
+
+module.exports.addNewAdminSchema = Joi.object({
+  username: Joi.string().min(8).alphanum().required(),
+  email: Joi.string().email().required(),
+  firstName: Joi.string().required(),
+  lastName: Joi.string().required(),
+  password: Joi.string()
+    .min(8)
+    .pattern(/[!@#$%&*_!]/)
+    .pattern(/[A-Z]/)
+    .pattern(/[a-z]/)
+    .pattern(/[0-9]/)
+    .required(),
+});
+
 module.exports.addAddressSchema = Joi.object({
   label: Joi.string().min(3).max(50).required(),
   address: Joi.string().min(3).max(200).required(),

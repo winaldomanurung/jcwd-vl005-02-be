@@ -13,6 +13,7 @@ router.post("/forgotpassword", user.forgetpassword);
 router.post("/resetpassword",auth, user.resetpassword);
 router.post("/register", user.register);
 router.patch("/verified", auth, user.verifyUser);
+router.post("/resendemail",user.resendemail);
 
 // export * modules
 module.exports = router;

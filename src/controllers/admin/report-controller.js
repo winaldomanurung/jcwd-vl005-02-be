@@ -4,7 +4,7 @@ const db = require("../../config").promise();
 module.exports.reports = async (req, res) => {
   try {
     // CURRENT MONTH
-    GET_REVENUE = `
+    const GET_REVENUE = `
     SELECT 
     DATE_FORMAT(date,'%Y-%m') AS current_month, SUM(shopping_amount) AS revenue
 FROM
@@ -59,11 +59,33 @@ GROUP BY product_id
 ORDER BY sold DESC
 LIMIT 3;    
     `;
+    const GET_DATA_TRANSACTIONS = `
+SELECT 
+    i.id,
+    i.code,
+    CONCAT(u.first_name, ' ', u.last_name) AS customer_name,
+    i.status,
+    i.shopping_amount,
+    i.shipping_cost,
+    i.total_payment,
+    i.payment_method,
+    i.date
+FROM
+    invoice_headers i
+        LEFT JOIN
+    users u ON i.user_id = u.id
+        LEFT JOIN
+    payments p ON i.id = p.invoice_id
+WHERE
+    status = 'Approved'
+        AND DATE(date) >= (LAST_DAY(NOW()) + INTERVAL 1 DAY - INTERVAL 1 MONTH)
+        AND DATE(date) < (LAST_DAY(NOW()) + INTERVAL 1 DAY)
+    `;
+
     const [REVENUE] = await db.execute(GET_REVENUE);
     const [NUMBER_OF_SALES] = await db.execute(GET_NUMBER_OF_SALES);
     const [TOP_THREE] = await db.execute(GET_TOP_THREE);
-    console.log(NUMBER_OF_SALES);
-    console.log(REVENUE);
+    const [DATA_TRANSACTIONS] = await db.execute(GET_DATA_TRANSACTIONS);
 
     const current_month = REVENUE[0].current_month;
     const revenue = REVENUE[0].revenue;
@@ -71,6 +93,16 @@ LIMIT 3;
     const profit = revenue - cost;
     const number_of_sales = NUMBER_OF_SALES[0].number_of_sales;
     const top_three = TOP_THREE;
+    const data_transactions = DATA_TRANSACTIONS;
+    if (
+      !REVENUE.length &&
+      !NUMBER_OF_SALES.length &&
+      !TOP_THREE.length &&
+      !DATA_TRANSACTIONS.length
+    ) {
+      return res.status(200).send('No Data');
+    }
+
     res.status(200).send({
       current_month: current_month,
       revenue: revenue,
@@ -78,6 +110,7 @@ LIMIT 3;
       profit: profit,
       number_of_sales: number_of_sales,
       top_three: top_three,
+      data_transactions: data_transactions,
     });
   } catch (error) {
     console.log("error:", error);
@@ -145,17 +178,45 @@ ORDER BY sold DESC
 LIMIT 3;
 `;
 
+    const GET_DATA_TRANSACTIONS_BY_DATE = `
+SELECT
+        i.id,
+        i.code,
+        CONCAT(u.first_name, ' ', u.last_name) AS customer_name,
+        i.status,
+        i.shopping_amount,
+        i.shipping_cost,
+        i.total_payment,
+        i.payment_method,
+        i.date as date
+    FROM
+        invoice_headers i
+            LEFT JOIN
+        users u ON i.user_id = u.id
+            LEFT JOIN
+        payments p ON i.id = p.invoice_id
+    WHERE
+        status = 'Approved'
+            AND DATE(date) =  ${db.escape(date)}
+
+
+`;
+
     const [REVENUE_BY_DATE] = await db.execute(GET_REVENUE_BY_DATE);
     const [NUMBER_OF_SALES_BY_DATE] = await db.execute(
       GET_NUMBER_OF_SALES_BY_DATE
     );
     const [TOP_THREE_BY_DATE] = await db.execute(GET_TOP_THREE_BY_DATE);
+    const [DATA_TRANSACTIONS_BY_DATE] = await db.execute(
+      GET_DATA_TRANSACTIONS_BY_DATE
+    );
     // console.log(NUMBER_OF_SALES);
     // console.log(REVENUE);
     if (
       !REVENUE_BY_DATE.length &&
       !NUMBER_OF_SALES_BY_DATE.length &&
-      !TOP_THREE_BY_DATE.length
+      !TOP_THREE_BY_DATE.length &&
+      !DATA_TRANSACTIONS_BY_DATE.length
     ) {
       return res.status(200).send({
         date: date,
@@ -164,6 +225,7 @@ LIMIT 3;
         profit: null,
         number_of_sales: null,
         top_three: [],
+        data_transactions: [],
       });
     }
 
@@ -173,6 +235,7 @@ LIMIT 3;
     const profit = revenue - cost;
     const number_of_sales = NUMBER_OF_SALES_BY_DATE[0].number_of_sales;
     const top_three = TOP_THREE_BY_DATE;
+    const data_transactions = DATA_TRANSACTIONS_BY_DATE;
     res.status(200).send({
       date: date,
       revenue: revenue,
@@ -180,6 +243,7 @@ LIMIT 3;
       profit: profit,
       number_of_sales: number_of_sales,
       top_three: top_three,
+      data_transactions: data_transactions,
     });
   } catch (error) {
     console.log("error:", error);
@@ -248,17 +312,44 @@ GROUP BY DATE_FORMAT(date,'%Y-%m');
     LIMIT 3;
 `;
 
+    const GET_DATA_TRANSACTIONS_BY_MONTH = `
+SELECT 
+    i.id,
+    i.code,
+    CONCAT(u.first_name, ' ', u.last_name) AS customer_name,
+    i.status,
+    i.shopping_amount,
+    i.shipping_cost,
+    i.total_payment,
+    i.payment_method,
+    i.date
+FROM
+    invoice_headers i
+        LEFT JOIN
+    users u ON i.user_id = u.id
+        LEFT JOIN
+    payments p ON i.id = p.invoice_id
+WHERE
+    status = 'Approved' 
+AND
+    DATE_FORMAT(date, '%Y-%m') = ${db.escape(month)}
+    `;
+
     const [REVENUE_BY_MONTH] = await db.execute(GET_REVENUE_BY_MONTH);
     const [NUMBER_OF_SALES_BY_MONTH] = await db.execute(
       GET_NUMBER_OF_SALES_BY_MONTH
     );
     const [TOP_THREE_BY_MONTH] = await db.execute(GET_TOP_THREE_BY_MONTH);
-    console.log(NUMBER_OF_SALES_BY_MONTH);
+    const [DATA_TRANSACTIONS_BY_MONTH] = await db.execute(
+      GET_DATA_TRANSACTIONS_BY_MONTH
+    );
+    // console.log(NUMBER_OF_SALES_BY_MONTH);
     // console.log(REVENUE);
     if (
       !REVENUE_BY_MONTH.length &&
       !NUMBER_OF_SALES_BY_MONTH.length &&
-      !TOP_THREE_BY_MONTH.length
+      !TOP_THREE_BY_MONTH.length &&
+      !DATA_TRANSACTIONS_BY_MONTH.length
     ) {
       return res.status(200).send({
         month: month,
@@ -267,6 +358,7 @@ GROUP BY DATE_FORMAT(date,'%Y-%m');
         profit: null,
         number_of_sales: null,
         top_three: [],
+        data_transactions: [],
       });
     }
 
@@ -276,6 +368,7 @@ GROUP BY DATE_FORMAT(date,'%Y-%m');
     const profit = revenue - cost;
     const number_of_sales = NUMBER_OF_SALES_BY_MONTH[0].number_of_sales;
     const top_three = TOP_THREE_BY_MONTH;
+    const data_transactions = DATA_TRANSACTIONS_BY_MONTH;
     res.status(200).send({
       month: month,
       revenue: revenue,
@@ -283,13 +376,13 @@ GROUP BY DATE_FORMAT(date,'%Y-%m');
       profit: profit,
       number_of_sales: number_of_sales,
       top_three: top_three,
+      data_transactions: data_transactions,
     });
   } catch (error) {
     console.log("error:", error);
     return res.status(500).send(error);
   }
 };
-
 
 //3. GET  REPORT BY YEAR PICKED
 module.exports.getreportbyyear = async (req, res) => {
@@ -351,8 +444,30 @@ WHERE
 GROUP BY product_id
 ORDER BY sold DESC
 LIMIT 3;
-
    
+`;
+
+    const GET_DATA_TRANSACTIONS_BY_YEAR = `
+SELECT 
+    i.id,
+    i.code,
+    CONCAT(u.first_name, ' ', u.last_name) AS customer_name,
+    i.status,
+    i.shopping_amount,
+    i.shipping_cost,
+    i.total_payment,
+    i.payment_method,
+    i.date
+FROM
+    invoice_headers i
+        LEFT JOIN
+    users u ON i.user_id = u.id
+        LEFT JOIN
+    payments p ON i.id = p.invoice_id
+WHERE
+    status = 'Approved'
+        AND DATE_FORMAT(date, '%Y') = ${db.escape(year)}
+
 `;
 
     const [REVENUE_BY_YEAR] = await db.execute(GET_REVENUE_BY_YEAR);
@@ -360,12 +475,16 @@ LIMIT 3;
       GET_NUMBER_OF_SALES_BY_YEAR
     );
     const [TOP_THREE_BY_YEAR] = await db.execute(GET_TOP_THREE_BY_YEAR);
+    const [DATA_TRANSACTIONS_BY_YEAR] = await db.execute(
+      GET_DATA_TRANSACTIONS_BY_YEAR
+    );
     // console.log(NUMBER_OF_SALES_BY_MONTH);
     // console.log(REVENUE);
     if (
       !REVENUE_BY_YEAR.length &&
       !NUMBER_OF_SALES_BY_YEAR.length &&
-      !TOP_THREE_BY_YEAR.length
+      !TOP_THREE_BY_YEAR.length &&
+      !DATA_TRANSACTIONS_BY_YEAR.length
     ) {
       return res.status(200).send({
         year: year,
@@ -374,6 +493,7 @@ LIMIT 3;
         profit: null,
         number_of_sales: null,
         top_three: [],
+        data_transactions: [],
       });
     }
 
@@ -383,6 +503,7 @@ LIMIT 3;
     const profit = revenue - cost;
     const number_of_sales = NUMBER_OF_SALES_BY_YEAR[0].number_of_sales;
     const top_three = TOP_THREE_BY_YEAR;
+    const data_transactions = DATA_TRANSACTIONS_BY_YEAR;
     res.status(200).send({
       year: year,
       revenue: revenue,
@@ -390,10 +511,10 @@ LIMIT 3;
       profit: profit,
       number_of_sales: number_of_sales,
       top_three: top_three,
+      data_transactions: data_transactions,
     });
   } catch (error) {
     console.log("error:", error);
     return res.status(500).send(error);
   }
 };
-
