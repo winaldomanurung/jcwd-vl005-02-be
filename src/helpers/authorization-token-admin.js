@@ -1,23 +1,21 @@
 const JWT = require("jsonwebtoken");
-// const http_status = require('./http-status-code')
-// const createError = require('./create-error')
 
 module.exports = (req, res, next) => {
-  const token = req.header("Auth-Token");
+  const tokenAdmin = req.header("Auth-Token-Admin");
   try {
     // check token
-    if (!token) {
+    if (!tokenAdmin) {
       return res.status(401).send("un-authorized.");
       // throw new createError(http_status.UNAUTHORIZHED, 'un-authorized.')
     }
 
     // verify token
-    const { id } = JWT.verify(token, "private123");
-    // console.log(id)
+    const { id } = JWT.verify(tokenAdmin, "private123");
+    // console.log(idAdmin);s
 
-    let userData = { user: { id: id } };
+    let adminData = { admin: { id: id } };
     // modifed object req
-    Object.assign(req, userData);
+    Object.assign(req, adminData);
     next();
   } catch (error) {
     console.log("error:", error);

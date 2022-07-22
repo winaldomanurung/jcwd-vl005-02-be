@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: "http://localhost:3000",
-    exposedHeaders: ["UID", "Auth-Token", "Authorization"],
+    exposedHeaders: ["UID", "Auth-Token","Auth-Token-Admin", "Authorization"],
   })
 );
 app.use(express.static("public"));
@@ -43,6 +43,7 @@ app.use("/admin", routers.adminProductRouter);
 app.use("/admin", routers.adminTransactionRouter);
 app.use("/admin", routers.adminReportRouter);
 app.use("/admin", routers.adminManageUsersRouter);
+app.use("/admin", routers.adminRouter);
 app.use("/admin/categories", routers.adminCategoriesRouter);
 app.use("/users", routers.user_router);
 app.use("/user/products", routers.userProductRouter);

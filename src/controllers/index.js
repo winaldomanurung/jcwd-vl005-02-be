@@ -3,6 +3,7 @@ const adminCategoryController = require("./admin/category-controller");
 const adminTransactionContoller = require("./admin/transaction-controller")
 const adminReportController = require("./admin/report-controller")
 const adminManageUsersController = require('./admin/manage-users-controller')
+const adminController = require("./admin/admin-controller")
 const user = require("../controllers/user/user-controller");
 const userProductController = require("./user/product-controller");
 const userCartController = require("./user/cart-controller");
@@ -16,6 +17,7 @@ module.exports = {
   adminTransactionContoller,
   adminReportController,
   adminManageUsersController,
+  adminController,
   user,
   userProductController,
   userCartController,

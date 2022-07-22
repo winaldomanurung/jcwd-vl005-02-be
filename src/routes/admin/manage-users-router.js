@@ -9,6 +9,6 @@ router.get("/users",adminManageUsersController.manageusers)
 
 // router.post("/transactiondaterange",adminTransactionContoller.TransactionsByDateRange)
 // router.post("/transactionbymonth",adminTransactionContoller.TransactionsByMonth)
-// router.patch("/changetransactionstatus",adminTransactionContoller.ChangeTransactionsStatus)
+router.patch("/changeuserstatus",adminManageUsersController.changeusersisactive)
 
 module.exports = router;
