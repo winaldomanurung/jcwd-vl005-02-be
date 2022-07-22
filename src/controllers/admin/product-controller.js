@@ -403,7 +403,7 @@ module.exports.createProduct = (req, res) => {
         "Add product success",
         "Your product now can be seen by other users.",
         newProduct,
-        ""
+        productId
       );
 
       res.status(response.status).send(response);
