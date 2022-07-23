@@ -472,7 +472,16 @@ module.exports.addInvoice = async (req, res) => {
           WHERE id=${database.escape(cartItem.product_id)};`;
       console.log(DECREASE_PRODUCT_STOCK);
 
+      const INCREASE_PRODUCT_SOLD = `
+      UPDATE products
+      SET sold = sold+${database.escape(
+        cartItem.amount
+      )}, sold_times= sold_times+1
+      WHERE id=${database.escape(cartItem.product_id)};`;
+      console.log(INCREASE_PRODUCT_SOLD);
+
       await database.execute(DECREASE_PRODUCT_STOCK);
+      await database.execute(INCREASE_PRODUCT_SOLD);
     });
 
     const DELETE_CART_ITEMS = `
@@ -675,4 +684,62 @@ module.exports.createPaymentProof = (req, res) => {
       res.status(err.status).send(err);
     }
   });
+};
+
+module.exports.updateInvoice = async (req, res) => {
+  let { code } = req.body;
+
+  try {
+    // 1. Check data apakah product exist di dalam database
+    const FIND_INVOICE_HEADER = `SELECT * FROM invoice_headers WHERE code = ${database.escape(
+      code
+    )};`;
+
+    const [INVOICE_HEADER] = await database.execute(FIND_INVOICE_HEADER);
+    if (!INVOICE_HEADER.length) {
+      throw new createError(
+        httpStatus.Bad_Request,
+        "Invoice update failed",
+        "Invoice is not exist!"
+      );
+    }
+
+    // 2. Check apakah body memiliki content
+    const isEmpty = !Object.keys(req.body).length;
+    if (isEmpty) {
+      throw new createError(
+        httpStatus.Bad_Request,
+        "Invoice update failed",
+        "Your update form is incomplete!"
+      );
+    }
+
+    //  3. Buat query untuk update
+    const UPDATE_INVOICE = `UPDATE invoice_headers SET status = 'Approved' WHERE code = ${database.escape(
+      code
+    )};`;
+    const [UPDATED_INVOICE] = await database.execute(UPDATE_INVOICE);
+
+    const response = new createResponse(
+      httpStatus.OK,
+      "Update invoice success",
+      "Invoice update saved successfully!",
+      "",
+      ""
+    );
+
+    res.status(response.status).send(response);
+  } catch (err) {
+    console.log("error : ", err);
+    const isTrusted = err instanceof createError;
+    if (!isTrusted) {
+      err = new createError(
+        httpStatus.Internal_Server_Error,
+        "SQL Script Error",
+        err.sqlMessage
+      );
+      console.log(err);
+    }
+    res.status(err.status).send(err);
+  }
 };

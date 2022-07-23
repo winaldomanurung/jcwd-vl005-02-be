@@ -26,6 +26,8 @@ router.post(
   userCheckoutController.createPaymentProof
 );
 
+router.patch("/update-invoice", auth, userCheckoutController.updateInvoice);
+
 // router.post(
 //   "/:userId/add/:productId/:qty",
 //   userCheckoutController.addToCartWithQuantity

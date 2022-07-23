@@ -215,16 +215,25 @@ module.exports.ChangeTransactionsStatusRejected = async (req, res) => {
     console.log("CHECKOUT_ITEMS");
     console.log(CHECKOUT_ITEMS[0]);
 
-    CHECKOUT_ITEMS[0].map(async (item) => {
+    CHECKOUT_ITEMS[0].map(async (cartItem) => {
       const INCREASE_PRODUCT_STOCK = `
     UPDATE products
     SET stock_in_unit=stock_in_unit+${db.escape(
-      item.amount
+      cartItem.amount
     )}, stock=GREATEST(CEIL(stock_in_unit/volume),0)
-    WHERE id=${db.escape(item.product_id)};`;
+    WHERE id=${db.escape(cartItem.product_id)};`;
       console.log(INCREASE_PRODUCT_STOCK);
 
+      const DECREASE_PRODUCT_SOLD = `
+    UPDATE products
+    SET sold=GREATEST(CEIL(sold-${db.escape(
+      cartItem.amount
+    )}),0), sold_times=GREATEST(CEIL(sold_times-1),0)
+    WHERE id=${db.escape(cartItem.product_id)};`;
+      console.log(DECREASE_PRODUCT_SOLD);
+
       await db.execute(INCREASE_PRODUCT_STOCK);
+      await db.execute(DECREASE_PRODUCT_SOLD);
     });
     if (month !== "") {
       const TRANSACTIONS_BY_MONTH = `

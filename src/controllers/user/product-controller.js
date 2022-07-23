@@ -18,12 +18,12 @@ module.exports.readProducts = async (req, res) => {
   const sortBy = req.query.sortBy || "id";
   const order = req.query.order || "asc";
   const offset = (page - 1) * limit;
-  // console.log(page, limit, offset, name, category, price);
+  console.log(page, limit, offset, name, category, price);
 
   try {
     let lowPrice;
     let highPrice;
-    switch (parseInt(price)) {
+    switch (price) {
       case "0-unlimited":
         lowPrice = 0;
         highPrice = 999999;
@@ -61,7 +61,7 @@ module.exports.readProducts = async (req, res) => {
         p.picture,
       c.name as category,
       p.description, 
-        p.price,
+        p.price, p.sold, p.sold_times,
       p.stock, p.stock_in_unit, 
         p.volume,
         p.unit
@@ -115,7 +115,7 @@ module.exports.readProductById = async (req, res) => {
       p.picture,
     c.name as category,
     p.description, 
-    p.price,
+    p.price, p.sold, p.sold_times,
     p.stock, p.stock_in_unit, 
       p.volume,
       p.unit
