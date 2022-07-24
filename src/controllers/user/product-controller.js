@@ -18,33 +18,33 @@ module.exports.readProducts = async (req, res) => {
   const sortBy = req.query.sortBy || "id";
   const order = req.query.order || "asc";
   const offset = (page - 1) * limit;
-  // console.log(page, limit, offset, name, category, price);
+  console.log(page, limit, offset, name, category, price);
 
   try {
     let lowPrice;
     let highPrice;
-    switch (parseInt(price)) {
-      case 1:
+    switch (price) {
+      case "0-unlimited":
         lowPrice = 0;
         highPrice = 999999;
         break;
-      case 2:
+      case "0-249":
         lowPrice = 0;
         highPrice = 249;
         break;
-      case 3:
+      case "250-499":
         lowPrice = 250;
         highPrice = 499;
         break;
-      case 4:
+      case "500-999":
         lowPrice = 500;
         highPrice = 999;
         break;
-      case 5:
+      case "1000-2000":
         lowPrice = 1000;
         highPrice = 2000;
         break;
-      case 6:
+      case "2000-unlimited":
         lowPrice = 2000;
         highPrice = 999999;
         break;
@@ -61,7 +61,7 @@ module.exports.readProducts = async (req, res) => {
         p.picture,
       c.name as category,
       p.description, 
-        p.price, p.sold,
+        p.price, p.sold, p.sold_times,
       p.stock, p.stock_in_unit, 
         p.volume,
         p.unit
@@ -104,48 +104,6 @@ module.exports.readProducts = async (req, res) => {
   }
 };
 
-module.exports.readProductBestSeller = async (req, res) => {
-  console.log("bestseller");
-  try {
-    let GET_PRODUCTS = `SELECT 
-      p.id, 
-      p.name,
-        p.picture,
-      c.name as category,
-      p.description, 
-        p.price, p.sold,
-      p.stock, 
-        p.volume,
-        p.unit
-    FROM products p
-    LEFT JOIN categories c ON p.category = c.id ORDER BY p.sold desc LIMIT 0, 5 ;`;
-
-    const [PRODUCTS] = await database.execute(GET_PRODUCTS);
-
-    const response = new createResponse(
-      httpStatus.OK,
-      "Products data fetched",
-      "Products data fetched successfully!",
-      PRODUCTS,
-      PRODUCTS.length
-    );
-
-    res.status(response.status).send(response);
-  } catch (err) {
-    console.log("error : ", err);
-    const isTrusted = err instanceof createError;
-    if (!isTrusted) {
-      err = new createError(
-        httpStatus.Internal_Server_Error,
-        "SQL Script Error",
-        err.sqlMessage
-      );
-      console.log(err);
-    }
-    res.status(err.status).send(err);
-  }
-};
-
 module.exports.readProductById = async (req, res) => {
   const productId = req.params.productId;
 
@@ -157,7 +115,7 @@ module.exports.readProductById = async (req, res) => {
       p.picture,
     c.name as category,
     p.description, 
-    p.price, p.sold,
+    p.price, p.sold, p.sold_times,
     p.stock, p.stock_in_unit, 
       p.volume,
       p.unit

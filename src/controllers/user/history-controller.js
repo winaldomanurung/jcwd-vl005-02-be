@@ -109,7 +109,7 @@ module.exports.generateInvoice = async (req, res) => {
     const GET_INVOICE_HEADER = `
     SELECT
     h.id,h.code, h.user_id, u.first_name, u.last_name, date_format(h.date, '%M %e, %Y') as created_date, date_format(h.expired_date, '%M %e, %Y') as expired_date, 
-    h.address_id, a.phone, a.address, a.city, a.province, a.postal_code, 
+     h.phone, h.address, h.city, h.province, h.postal_code, 
 	FORMAT(h.shopping_amount,2,'id_ID') as shopping_amount,
     FORMAT(h.shipping_cost,2,'id_ID') as shipping_cost,
     FORMAT(h.total_payment,2,'id_ID') as total_payment, 
@@ -117,7 +117,6 @@ module.exports.generateInvoice = async (req, res) => {
     h.status,  date_format(p.created_at, '%M %e, %Y') as payment_date
         FROM invoice_headers h 
         LEFT JOIN users u ON h.user_id = u.id
-        LEFT JOIN address a ON h.address_id = a.id
         LEFT JOIN payments p ON p.invoice_id = h.id
         WHERE h.user_id = ${database.escape(
           userId

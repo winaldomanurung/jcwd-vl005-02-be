@@ -35,11 +35,11 @@ module.exports.readProducts = async (req, res) => {
       GET_PRODUCTS = `SELECT 
       p.id, 
       p.name,
-        p.picture,
-      c.name as category,
+        p.picture, p.category,
+        c.name as category_name,
       p.description, 
-        p.price, p.sold,
-      p.stock, 
+        p.price,p.stock, 
+        p.stock_in_unit,
         p.volume,
         p.unit
     FROM products p
@@ -60,11 +60,12 @@ module.exports.readProducts = async (req, res) => {
       GET_PRODUCTS = `SELECT 
       p.id, 
       p.name,
-        p.picture,
-      c.name as category,
+        p.picture, p.category,
+      c.name as category_name,
       p.description, 
-        p.price, p.sold,
-      p.stock, 
+        p.price,
+        p.stock, 
+    p.stock_in_unit, 
         p.volume,
         p.unit
     FROM products p
@@ -85,11 +86,11 @@ module.exports.readProducts = async (req, res) => {
       GET_PRODUCTS = `SELECT 
       p.id, 
       p.name,
-        p.picture,
-      c.name as category,
+        p.picture, p.category,
+        c.name as category_name,
       p.description, 
-        p.price, p.sold,
-      p.stock, 
+        p.price,p.stock, 
+        p.stock_in_unit, 
         p.volume,
         p.unit
     FROM products p
@@ -131,17 +132,20 @@ module.exports.readProductById = async (req, res) => {
   try {
     const GET_PRODUCT_BY_ID = `
     SELECT 
-    id, 
-    name, 
-    description, 
-    category, 
-    stock,
-    volume, 
-    unit, 
-    price, 
-    picture
-    FROM products 
-    WHERE id = ?; 
+    p.id, 
+    p.name, 
+    p.description, 
+    p.category,
+    c.name as category_name, 
+    p.stock, 
+    p.stock_in_unit,
+    p.volume, 
+    p.unit, 
+    p.price, 
+    p.picture
+    FROM products p
+    LEFT JOIN categories c ON p.category = c.id 
+    WHERE p.id = ?; 
       `;
     const [PRODUCT] = await database.execute(GET_PRODUCT_BY_ID, [productId]);
 
@@ -399,7 +403,7 @@ module.exports.createProduct = (req, res) => {
         "Add product success",
         "Your product now can be seen by other users.",
         newProduct,
-        ""
+        productId
       );
 
       res.status(response.status).send(response);

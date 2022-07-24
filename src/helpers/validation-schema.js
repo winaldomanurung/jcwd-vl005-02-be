@@ -91,6 +91,15 @@ module.exports.addAddressSchema = Joi.object({
   province: Joi.string().min(3).max(50).required(),
 });
 
+module.exports.editAddressSchema = Joi.object({
+  label: Joi.string().min(3).max(50).required(),
+  address: Joi.string().min(3).max(200).required(),
+  phone: Joi.number().required(),
+  city: Joi.string().min(3).max(50).required(),
+  postal_code: Joi.number().required(),
+  province: Joi.string().min(3).max(50).required(),
+});
+
 module.exports.addProofSchema = Joi.object({
   invoiceId: Joi.number().required(),
 });

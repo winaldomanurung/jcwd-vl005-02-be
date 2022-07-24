@@ -19,6 +19,8 @@ exports.generateToken = (req, res) => {
 };
 
 exports.processPayment = (req, res) => {
+  // list cc yang di approve (jika ga ada berarti ditolak)
+  // alternative: selalu berhasil
   let nonceFromTheClient = req.body.paymentMethodNonce;
   let amountFromTheClient = req.body.amount;
 

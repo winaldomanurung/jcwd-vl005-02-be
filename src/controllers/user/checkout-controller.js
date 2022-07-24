@@ -403,34 +403,45 @@ module.exports.addInvoice = async (req, res) => {
 
     // define query
 
+    const GET_ADDRESSES = `
+    SELECT * FROM address WHERE user_id = ${userId} AND id=${addressId};`;
+
+    const [ADDRESSES] = await database.execute(GET_ADDRESSES);
+    const addressData = ADDRESSES[0];
+
     const GET_CART_ITEMS = `
-    SELECT
-    c.id,
-    c.user_id,
-    c.product_id,
-      p.name,
-      pc.name as category,
-      p.stock,
-      p.unit,
-    c.amount,
-      p.stock-c.amount as remaining_stock,
-      p.price,
-      p.picture
-    FROM cart_items c
-    LEFT JOIN products p ON c.product_id = p.id 
-      LEFT JOIN categories pc ON p.category = pc.id
-    WHERE c.user_id = ${userId};`;
+      SELECT
+      c.id,
+      c.user_id,
+      c.product_id,
+        p.name,
+        p.description,
+        pc.name as category,
+        p.stock,
+        p.unit,
+      c.amount,
+        p.stock-c.amount as remaining_stock,
+        p.price,
+        p.picture
+      FROM cart_items c
+      LEFT JOIN products p ON c.product_id = p.id
+        LEFT JOIN categories pc ON p.category = pc.id
+      WHERE c.user_id = ${userId};`;
 
     const ADD_INVOICE_HEADER = `
-      INSERT INTO invoice_headers(code, user_id, address_id, shopping_amount, shipping_cost, payment_method, status)
-      VALUES(${database.escape(invoiceCode)},
-          ${database.escape(userId)},${database.escape(
-      addressId
+        INSERT INTO invoice_headers(code, user_id, address, phone, postal_code, city, province, shopping_amount, shipping_cost, payment_method, status)
+        VALUES(${database.escape(invoiceCode)},
+            ${database.escape(userId)},${database.escape(
+      addressData.address
+    )},${database.escape(addressData.phone)},${database.escape(
+      addressData.postal_code
+    )},${database.escape(addressData.city)},${database.escape(
+      addressData.province
     )},${database.escape(shopping_amount)}, ${database.escape(
       shipping_cost
     )}, ${database.escape(payment_method)},${database.escape(status)}
-      );
-  `;
+        );
+    `;
 
     const GET_INVOICE_HEADER_ID = `SELECT LAST_INSERT_ID();`;
 
@@ -441,23 +452,24 @@ module.exports.addInvoice = async (req, res) => {
 
     CART_ITEMS.map(async (cartItem) => {
       const ADD_INVOICE_DETAIL = `
-        INSERT INTO invoice_details(invoice_header_id, product_id, price, amount, unit)
-        VALUES(
-          ${database.escape(invoiceHeaderId)},${database.escape(
+      INSERT INTO invoice_details(invoice_header_id, product_id, price, amount, unit)
+      VALUES(
+        ${database.escape(invoiceHeaderId)},${database.escape(
         cartItem.product_id
       )},${database.escape(cartItem.price)},${database.escape(
         cartItem.amount
       )},${database.escape(cartItem.unit)}
-      );`;
+    );`;
 
+      // console.log(ADD_INVOICE_DETAIL);
       const INVOICE_DETAIL_ADDED = await database.execute(ADD_INVOICE_DETAIL);
 
       const DECREASE_PRODUCT_STOCK = `
-      UPDATE products
-      SET stock_in_unit = GREATEST(stock_in_unit-${database.escape(
-        cartItem.amount
-      )},0), stock= GREATEST(CEIL(stock_in_unit/volume),0)
-      WHERE id=${database.escape(cartItem.product_id)};`;
+          UPDATE products
+          SET stock_in_unit = GREATEST(stock_in_unit-${database.escape(
+            cartItem.amount
+          )},0), stock= GREATEST(CEIL(stock_in_unit/volume),0)
+          WHERE id=${database.escape(cartItem.product_id)};`;
       console.log(DECREASE_PRODUCT_STOCK);
 
       const INCREASE_PRODUCT_SOLD = `
@@ -473,7 +485,7 @@ module.exports.addInvoice = async (req, res) => {
     });
 
     const DELETE_CART_ITEMS = `
-    DELETE FROM cart_items WHERE user_id=${database.escape(userId)};`;
+      DELETE FROM cart_items WHERE user_id=${database.escape(userId)};`;
 
     const CART_ITEMS_DELETED = await database.execute(DELETE_CART_ITEMS);
 
@@ -486,6 +498,7 @@ module.exports.addInvoice = async (req, res) => {
       CART_ITEMS
     );
     res.status(response.status).send(response);
+    // res.status(200).send("ok");
   } catch (err) {
     console.log("error : ", err);
     const isTrusted = err instanceof createError;
@@ -524,12 +537,11 @@ module.exports.readInvoice = async (req, res) => {
 
     const GET_INVOICE_ITEMS = `
     SELECT
-    h.id, h.code, h.user_id, u.first_name, u.last_name, a.phone, date_format(h.date, '%M %e, %Y') as date, date_format(h.expired_date, '%M %e, %Y') as expired_date, h.address_id, a.address, a.city, a.province, a.postal_code, h.shipping_cost, h.total_payment, h.payment_method,
+    h.id, h.code, h.user_id, u.first_name, u.last_name, h.phone, date_format(h.date, '%M %e, %Y') as date, date_format(h.expired_date, '%M %e, %Y') as expired_date, h.address, h.city, h.province, h.postal_code, h.shipping_cost, h.total_payment, h.payment_method,
     h.status, d.invoice_header_id, d.product_id, p.name, d.price, d.amount, d.unit, date_format(py.created_at, '%M %e, %Y') as payment_date
         FROM invoice_headers h 
         LEFT JOIN invoice_details d ON h.id = d.invoice_header_id
         LEFT JOIN products p ON d.product_id = p.id
-        LEFT JOIN address a ON h.address_id = a.id
         LEFT JOIN users u ON h.user_id = u.id
         LEFT JOIN payments py ON h.id = py.invoice_id
         WHERE h.user_id = ${database.escape(
@@ -672,4 +684,62 @@ module.exports.createPaymentProof = (req, res) => {
       res.status(err.status).send(err);
     }
   });
+};
+
+module.exports.updateInvoice = async (req, res) => {
+  let { code } = req.body;
+
+  try {
+    // 1. Check data apakah product exist di dalam database
+    const FIND_INVOICE_HEADER = `SELECT * FROM invoice_headers WHERE code = ${database.escape(
+      code
+    )};`;
+
+    const [INVOICE_HEADER] = await database.execute(FIND_INVOICE_HEADER);
+    if (!INVOICE_HEADER.length) {
+      throw new createError(
+        httpStatus.Bad_Request,
+        "Invoice update failed",
+        "Invoice is not exist!"
+      );
+    }
+
+    // 2. Check apakah body memiliki content
+    const isEmpty = !Object.keys(req.body).length;
+    if (isEmpty) {
+      throw new createError(
+        httpStatus.Bad_Request,
+        "Invoice update failed",
+        "Your update form is incomplete!"
+      );
+    }
+
+    //  3. Buat query untuk update
+    const UPDATE_INVOICE = `UPDATE invoice_headers SET status = 'Approved' WHERE code = ${database.escape(
+      code
+    )};`;
+    const [UPDATED_INVOICE] = await database.execute(UPDATE_INVOICE);
+
+    const response = new createResponse(
+      httpStatus.OK,
+      "Update invoice success",
+      "Invoice update saved successfully!",
+      "",
+      ""
+    );
+
+    res.status(response.status).send(response);
+  } catch (err) {
+    console.log("error : ", err);
+    const isTrusted = err instanceof createError;
+    if (!isTrusted) {
+      err = new createError(
+        httpStatus.Internal_Server_Error,
+        "SQL Script Error",
+        err.sqlMessage
+      );
+      console.log(err);
+    }
+    res.status(err.status).send(err);
+  }
 };
