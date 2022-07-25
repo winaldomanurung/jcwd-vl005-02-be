@@ -57,8 +57,8 @@ module.exports.readAllInvoice = async (req, res) => {
     // create response
     const response = new createResponse(
       httpStatus.OK,
-      "Address data fetched",
-      "Address data fetched successfully!",
+      "Invoice data fetched",
+      "Invoice data fetched successfully!",
       INVOICE_HEADERS,
       INVOICE_HEADERS.length
     );
@@ -81,6 +81,8 @@ module.exports.readAllInvoice = async (req, res) => {
 
 module.exports.readAllNotifications = async (req, res) => {
   let userId = req.user.id;
+  console.log("jalan");
+  console.log("USER ID", userId);
 
   try {
     const GET_NOTIFICATIONS = `
