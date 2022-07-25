@@ -3,13 +3,16 @@ const JWT = require("jsonwebtoken");
 const db = require("../../config").promise();
 const {
   loginSchema,
-  registerSchema,
   resetPasswordSchema,
   forgotPasswordSchema,
   addNewAdminSchema,
 } = require("../../helpers/validation-schema");
 const { createToken } = require("../../helpers/createToken");
 const transporter = require("../../helpers/nodemailer");
+
+// localhost:3000
+const PUBLIC_URL = process.env.PUBLIC_URL;
+
 // ADMIN LOGIN
 module.exports.loginadmin = async (req, res) => {
   // username menampung nilai email dan username
@@ -106,7 +109,7 @@ module.exports.forgetpassword = async (req, res) => {
       from: `Admin <zilongbootcamp@gmail.com>`,
       to: `${email}`,
       subject: `Reset Password`,
-      html: `<a href='http://localhost:3000/admin/resetpassword/${token}'> Click here to reset your password</a>`,
+      html: `<a href='${PUBLIC_URL}/admin/resetpassword/${token}'> Click here to reset your password</a>`,
     };
 
     transporter.sendMail(mail, (errMail, resmail) => {
