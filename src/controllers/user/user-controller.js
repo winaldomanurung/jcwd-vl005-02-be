@@ -9,6 +9,7 @@ const {
 } = require("../../helpers/validation-schema");
 const { createToken } = require("../../helpers/createToken");
 const transporter = require("../../helpers/nodemailer");
+const PUBLIC_URL = process.env.PUBLIC_URL;
 
 // LOGIN
 module.exports.login = async (req, res) => {
@@ -106,7 +107,7 @@ module.exports.forgetpassword = async (req, res) => {
       from: `Admin <zilongbootcamp@gmail.com>`,
       to: `${email}`,
       subject: `Reset Password`,
-      html: `<a href='http://localhost:3000/resetpassword/${token}'> Click here to reset your password</a>`,
+      html: `<a href='${PUBLIC_URL}/resetpassword/${token}'> Click here to reset your password</a>`,
     };
 
     transporter.sendMail(mail, (errMail, resmail) => {
@@ -234,7 +235,7 @@ module.exports.register = async (req, res) => {
         from: `Admin <zilongbootcamp@gmail.com>`,
         to: `${email}`,
         subject: `Account verification`,
-        html: `<a href='http://localhost:3000/authentication/${token}'> Click here for verification your account</a>`,
+        html: `<a href='${PUBLIC_URL}/authentication/${token}'> Click here for verification your account</a>`,
       };
       transporter.sendMail(mail, (errMail, resmail) => {
         if (errMail) {
@@ -316,7 +317,7 @@ module.exports.resendemail = async (req, res) => {
       from: `Admin <zilongbootcamp@gmail.com>`,
       to: `${email}`,
       subject: `Account verification`,
-      html: `<a href='http://localhost:3000/authentication/${token}'> Click here for verification your account</a>`,
+      html: `<a href='${PUBLIC_URL}/authentication/${token}'> Click here for verification your account</a>`,
     };
 
     transporter.sendMail(mail, (errMail, resmail) => {
