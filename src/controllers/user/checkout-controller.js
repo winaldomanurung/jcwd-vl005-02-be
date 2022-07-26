@@ -381,6 +381,13 @@ module.exports.addInvoice = async (req, res) => {
 
   console.log(req.body);
 
+  const today = new Date();
+  const twoDaysLater = new Date();
+
+  twoDaysLater.setDate(today.getDate() + 2);
+
+  let expiredDate = twoDaysLater.toJSON().slice(0, 19).replace("T", " ");
+
   let invoiceCode = uid().toUpperCase();
 
   try {
@@ -429,7 +436,7 @@ module.exports.addInvoice = async (req, res) => {
       WHERE c.user_id = ${userId};`;
 
     const ADD_INVOICE_HEADER = `
-        INSERT INTO invoice_headers(code, user_id, address, phone, postal_code, city, province, shopping_amount, shipping_cost, payment_method, status)
+        INSERT INTO invoice_headers(code, user_id, address, phone, postal_code, city, province, shopping_amount, shipping_cost, payment_method, status, expired_date)
         VALUES(${database.escape(invoiceCode)},
             ${database.escape(userId)},${database.escape(
       addressData.address
@@ -439,7 +446,9 @@ module.exports.addInvoice = async (req, res) => {
       addressData.province
     )},${database.escape(shopping_amount)}, ${database.escape(
       shipping_cost
-    )}, ${database.escape(payment_method)},${database.escape(status)}
+    )}, ${database.escape(payment_method)},${database.escape(
+      status
+    )}, ${database.escape(expiredDate)}
         );
     `;
 
