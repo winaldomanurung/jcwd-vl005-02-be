@@ -25,7 +25,7 @@ app.use(bearerToken());
 
 // Database connection
 const connection = require("./src/config");
-connection.connect((error) => {
+connection.getConnection((error) => {
   if (error) {
     console.log("Database connection error: ", error);
   }
