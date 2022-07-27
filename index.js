@@ -59,6 +59,7 @@ const io = new Server(server, {
   cors: {
     origin: CLIENT_PORT,
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
