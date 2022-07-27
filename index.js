@@ -9,7 +9,7 @@ const server = http.createServer(app);
 
 require("dotenv").config();
 
-const port = process.env.PORT || 2000;
+const port = process.env.PORT;
 const CLIENT_PORT = process.env.CLIENT_PORT;
 const routers = require("./src/routes");
 
