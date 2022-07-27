@@ -10,7 +10,9 @@ const server = http.createServer(app);
 require("dotenv").config();
 
 const port = process.env.PORT;
-const CLIENT_PORT = process.env.CLIENT_PORT;
+// const CLIENT_PORT = process.env.CLIENT_PORT;
+const CLIENT_PORT = "http://localhost:3000";
+
 const routers = require("./src/routes");
 
 app.use(express.json());
@@ -18,6 +20,7 @@ app.use(
   cors({
     origin: CLIENT_PORT,
     exposedHeaders: ["UID", "Auth-Token", "Auth-Token-Admin", "Authorization"],
+    credentials: true,
   })
 );
 app.use(function (req, res, next) {
