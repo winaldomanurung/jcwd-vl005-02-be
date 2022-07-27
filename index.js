@@ -10,8 +10,8 @@ const server = http.createServer(app);
 require("dotenv").config();
 
 const port = process.env.PORT;
-// const CLIENT_PORT = process.env.CLIENT_PORT;
-const CLIENT_PORT = "http://localhost:3000";
+const CLIENT_PORT = process.env.CLIENT_PORT;
+// const CLIENT_PORT = "http://localhost:3000";
 
 const routers = require("./src/routes");
 
@@ -34,6 +34,7 @@ app.use(function (req, res, next) {
     "X-Requested-With,content-type"
   );
   res.setHeader("Access-Control-Allow-Credentials", true);
+  res.header("Access-Control-Allow-Origin", "*");
   next();
 });
 app.use(express.static("public"));
