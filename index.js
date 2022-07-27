@@ -18,7 +18,8 @@ const routers = require("./src/routes");
 app.use(express.json());
 app.use(
   cors({
-    origin: CLIENT_PORT,
+    // origin: CLIENT_PORT,
+    origin: true,
     exposedHeaders: ["UID", "Auth-Token", "Auth-Token-Admin", "Authorization"],
     credentials: true,
   })
