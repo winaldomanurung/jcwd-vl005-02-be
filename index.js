@@ -35,6 +35,7 @@ app.use(function (req, res, next) {
   );
   res.setHeader("Access-Control-Allow-Credentials", true);
   res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Header", "*");
   next();
 });
 app.use(express.static("public"));
@@ -73,11 +74,15 @@ app.use("/user/address", routers.addressRouter);
 
 // Socket.io
 const io = new Server(server, {
-  cors: {
-    origin: CLIENT_PORT,
-    methods: ["GET", "POST"],
-    allowedHeaders: ["my-custom-header"],
-    credentials: true,
+  // cors: {
+  //   origin: CLIENT_PORT,
+  //   methods: ["GET", "POST"],
+  //   allowedHeaders: ["my-custom-header"],
+  //   credentials: true,
+  // },
+  allowRequest: (req, callback) => {
+    const noOriginHeader = req.headers.origin === undefined;
+    callback(null, noOriginHeader); // only allow requests without 'origin' header
   },
 });
 
