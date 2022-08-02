@@ -9,42 +9,23 @@ const server = http.createServer(app);
 
 require("dotenv").config();
 
-const port = process.env.PORT;
+const port = process.env.PORT || 2000;
 const CLIENT_PORT = process.env.CLIENT_PORT;
-// const CLIENT_PORT = "http://localhost:3000";
-
 const routers = require("./src/routes");
 
 app.use(express.json());
 app.use(
   cors({
-    // origin: CLIENT_PORT,
-    origin: true,
+    origin: CLIENT_PORT,
     exposedHeaders: ["UID", "Auth-Token", "Auth-Token-Admin", "Authorization"],
-    credentials: true,
   })
 );
-app.use(function (req, res, next) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-Requested-With,content-type"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", true);
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Header", "*");
-  next();
-});
 app.use(express.static("public"));
 app.use(bearerToken());
 
 // Database connection
 const connection = require("./src/config");
-connection.getConnection((error) => {
+connection.connect((error) => {
   if (error) {
     console.log("Database connection error: ", error);
   }
@@ -75,15 +56,9 @@ app.use("/user/address", routers.addressRouter);
 
 // Socket.io
 const io = new Server(server, {
-  // cors: {
-  //   origin: CLIENT_PORT,
-  //   methods: ["GET", "POST"],
-  //   allowedHeaders: ["my-custom-header"],
-  //   credentials: true,
-  // },
-  allowRequest: (req, callback) => {
-    const noOriginHeader = req.headers.origin === undefined;
-    callback(null, noOriginHeader); // only allow requests without 'origin' header
+  cors: {
+    origin: CLIENT_PORT,
+    methods: ["GET", "POST"],
   },
 });
 
